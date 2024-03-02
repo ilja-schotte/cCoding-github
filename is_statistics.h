@@ -1,3 +1,12 @@
-#ifdev __unix__
+
+#ifdef __unix__
     #include <stdio.h>
 #endif
+
+
+
+
+
+
+
+
