@@ -9,6 +9,7 @@
 #endif
 
 
+
 // double - functions
 double is_farr_sum(double *array, int length);			// sum of all values within the array
 double is_farr_maximum(double *array, int length);		// maximum value of a double array
@@ -18,21 +19,23 @@ double is_farr_average(double *array, int length);		// average of a double array
 double is_farr_variance(double *array, int length);		// variance of a double array
 double is_farr_stddev(double *array, int length);		// standarddeviation of a double array
 double *is_farr_sort(double *array, int length, char *dir);	// sorts an double array ascending or descending
+double *is_farr_reverse(double *array, int length);		// will reverse an array of doubles
 
 
 // int functions
-int is_darr_sum(int *array, int length);			// sum of all values within the array
-int is_darr_maximum(int *array, int length);			// maximum value of a double array
-int is_darr_minimum(int *array, int length);			// minimum value of a double array
-int is_darr_median(int *array, int length);			// median of a double array
-int is_darr_average(int *array, int length);			// average of a double array
-int is_darr_variance(int *array, int length);			// variance of a double array
-int is_darr_stddev(int *array, int length);			// standarddeviation of a double array
-int *is_darr_sort(int *array, int length, char *dir);		// sorts an double array ascending or descending
+int is_darr_sum(int *array, int length, int *result);			// sum of all values within the array
+int is_darr_maximum(int *array, int length, int *result);		// maximum value of a double array
+int is_darr_minimum(int *array, int length, int *result);		// minimum value of a double array
+int is_darr_median(int *array, int length, int *result);		// median of a double array
+int is_darr_average(int *array, int length, int *result);		// average of a double array
+int is_darr_variance(int *array, int length, int *result);		// variance of a double array
+int is_darr_stddev(int *array, int length, int *result);		// standarddeviation of a double array
+int *is_darr_sort(int *array, int length, char *dir, int *result);	// sorts an double array ascending or descending
+int *is_darr_reverse(int *array, int length, int *result);		// will reverse an array if integers
 
 // ###############################################################################################################################################################################
 // ###############################################################################################################################################################################
-// ########################################################################## double - functions ####################################################################################
+// ########################################################################## double - functions #################################################################################
 
 double is_farr_sum(double *array, int length){
 
@@ -593,25 +596,84 @@ double *is_farr_sort(double *array, int length, char *dir){
 }
 
 
+// ########################################################################################
+// ########################################################################################
+
+
+double *is_farr_reverse(double *array, int length){
+
+    /*
+        INPUT:
+        double *array	...	pointer to an array of double values.
+        int length	...	length of that array
+    
+        OUTPUT:
+        Success: pointer of the reversed input array.
+        Failure: NULL-pointer
+        
+        CHECKS:
+        - checks the length of array is greater then 0.
+    */
+    
+    int idx, kdx;
+    jmp_buf env;
+    
+    // ######################### FUNCTIONS ###########################
+    double *reverse_array(double *array, int length){
+    
+        // Check for length greater then 0:
+        if (length <= 0){
+            longjmp(env, 1);
+        }
+        // ###########################################
+        // ###########################################       
+        double *reversed_array;
+    
+    	reversed_array = (double*) malloc(length * sizeof(double));
+    	if (reversed_array == NULL){
+    	    longjmp(env, 2);
+    	}
+        
+        // reverse values:
+        for (idx=0, kdx=length-1; idx<length; idx++, kdx--){
+        
+            reversed_array[idx] = array[kdx];
+        }
+        
+        return reversed_array;
+    }
+    // ################################################################
+
+    switch(setjmp(env)){
+        case 0: return reverse_array(array, length);
+        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return NULL;
+        case 2: printf("ERROR! (%s -> %s)\n>>> Memory fault!\n\n",__FILE__, __func__); return NULL;
+        default: printf("Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return NULL;
+    }
+
+}
+
 // ###############################################################################################################################################################################
 // ###############################################################################################################################################################################
 // ########################################################################## int - functions ####################################################################################
 
-int is_darr_sum(int *array, int length){
+int is_darr_sum(int *array, int length, int *result){
 
     /*
         INPUT:
         int *array	...	pointer to an array of int values.
-        int length	...	length of that array
+        int length	...	length of that array.
+        int *result	...	result value of this function.
     
         OUTPUT:
-        Success: The sum over all values of the array.
-        Failure: NAN.
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)
         
         CHECKS:
         - checks if the length of array is greater then 0.
-        - checks for NaN values within the array.
     */
+    
     
     int idx;
     jmp_buf env;
@@ -626,16 +688,11 @@ int is_darr_sum(int *array, int length){
             longjmp(env, 1);
         }
         
-        // check for NaN values
-        for (idx=0; idx<length; idx++){
-            if (isnan(array[idx])){
-                longjmp(env, 2);
-            }
-        }
         // ###########################################
         // ###########################################
         // return the only one value if length is 1.
         if (length == 1){
+            
             return array[0];
         }
         else{     
@@ -646,16 +703,16 @@ int is_darr_sum(int *array, int length){
     
                 sum += array[idx];
             }
+            
             return sum;
         }
     }
     // ################################################################
  
     switch(setjmp(env)){
-        case 0: return calc_sum(array, length);
-        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n", __FILE__, __func__); return NAN;
-        case 2: printf("ERROR! ( %s -> %s)\n>>> The array contains 'NaN' values.\n\n", __FILE__, __func__); return NAN;
-        default: printf("Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return NAN;
+        case 0: *result = calc_sum(array, length); return EXIT_SUCCESS;
+        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n", __FILE__, __func__); return EXIT_FAILURE;
+        default: printf("Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;
     } 
     
 }
@@ -665,20 +722,21 @@ int is_darr_sum(int *array, int length){
 // ########################################################################################
 
 
-int is_darr_maximum(int *array, int length){
+int is_darr_maximum(int *array, int length, int *result){
 
     /*
         INPUT:
         int *array	...	pointer to an array of int values.
         int length	...	length of that array
+        int *result	...	result value of this function
     
         OUTPUT:
-        Success: The maximum value of a array of length "length".
-        Failure: NAN.
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)
         
         CHECKS:
         - checks if the length of array is greater then 0.
-        - checks for NaN values within the array.
     */
     
     int idx;
@@ -694,12 +752,6 @@ int is_darr_maximum(int *array, int length){
             longjmp(env, 1);
         }
         
-        // check for NaN values
-        for (idx=0; idx<length; idx++){
-            if (isnan(array[idx])){
-                longjmp(env, 2);
-            }
-        }
         // ###########################################
         // ###########################################
         // return the only one value if length is 1.
@@ -723,10 +775,9 @@ int is_darr_maximum(int *array, int length){
     // ################################################################
  
     switch(setjmp(env)){
-        case 0: return calc_maximum(array, length);
-        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n", __FILE__, __func__); return NAN;
-        case 2: printf("ERROR! ( %s -> %s)\n>>> The array contains 'NaN' values.\n\n", __FILE__, __func__); return NAN;
-        default: printf("Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return NAN;
+        case 0: *result = calc_maximum(array, length); return EXIT_SUCCESS;
+        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n", __FILE__, __func__); return EXIT_FAILURE;
+        default: printf("Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;
     } 
     
 }
@@ -735,20 +786,21 @@ int is_darr_maximum(int *array, int length){
 // ########################################################################################
 
 
-int is_darr_minimum(int *array, int length){
+int is_darr_minimum(int *array, int length, int *result){
 
     /*
         INPUT:
         int *array	...	pointer to an array of int values.
-        int length	...	length of that array
+        int length	...	length of that array.
+        int *result	...	result value of this function.
     
         OUTPUT:
-        Success: The minimum value of a array of length "length".
-        Failure: NAN.
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)
         
         CHECKS:
         - checks if the length of array is greater then 0.
-        - checks for NaN values within the array.
     */
     
     int idx;
@@ -762,12 +814,6 @@ int is_darr_minimum(int *array, int length){
             longjmp(env, 1);
         }
         
-        // Check for NaN-values
-        for (idx=0; idx<length; idx++){
-            if (isnan(array[idx])){
-                longjmp(env, 2);
-            }
-        }
         // ###########################################
         // ###########################################
         
@@ -791,10 +837,9 @@ int is_darr_minimum(int *array, int length){
     // ################################################################
 
     switch(setjmp(env)){
-        case 0: return calc_minimum(array, length);
-        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return NAN;
-        case 2: printf("ERROR! (%s -> %s)\n>>> The array contains 'NaN' values.\n\n",__FILE__, __func__); return NAN;
-        default: printf("Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return NAN;
+        case 0: *result = calc_minimum(array, length); return EXIT_SUCCESS;
+        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return EXIT_FAILURE;
+        default: printf("Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return EXIT_FAILURE;
     }
 }
 
@@ -803,7 +848,7 @@ int is_darr_minimum(int *array, int length){
 // ########################################################################################
 
 
-int is_darr_average(int *array, int length){
+int is_darr_average(int *array, int length, int *result){
 
     /*
         INPUT:
@@ -811,12 +856,12 @@ int is_darr_average(int *array, int length){
         int length	...	length of that array
     
         OUTPUT:
-        Success: The average value of a array of length "length".
-        Failure: NAN
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)
         
         CHECKS:
         - checks the length of array is greater then 0.
-        - checks for NaN values within the array.
     */
     
     int idx;
@@ -829,12 +874,7 @@ int is_darr_average(int *array, int length){
         if (length <= 0){
             longjmp(env, 1);
         }
-        // Check for NaN values:
-        for (idx=0; idx<length; idx++){
-            if (isnan(array[idx])){
-                longjmp(env, 2);
-            }
-        }   
+          
         // ###########################################
         // ###########################################
         
@@ -843,20 +883,24 @@ int is_darr_average(int *array, int length){
             return array[0];
         }
         else{        
-            int average = 0;
+            int average;
     
-            average = is_farr_sum(array, length);
+            if (!(is_darr_sum(array, length, &average))){
             
-            return average /= (int)length;
+                return average /= (int)length;
+            }
+            else{
+                longjmp(env, 2);
+            }
         }
     }
     // ################################################################
 
     switch(setjmp(env)){
-        case 0: return calc_average(array, length);
-        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return NAN;
-        case 2: printf("ERROR! (%s -> %s)\n>>> The array contains 'NaN' values.\n\n",__FILE__, __func__); return NAN;
-        default: printf("Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return NAN;
+        case 0: *result = calc_average(array, length); return EXIT_SUCCESS;
+        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return EXIT_FAILURE;
+        case 2: printf("ERROR! (%s -> %s)\n>>> The previous function \"is_darr_sum()\" returned an error.\n\n",__FILE__, __func__); return EXIT_FAILURE;
+        default: printf("Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return EXIT_FAILURE;
     }
 }
 
@@ -865,19 +909,21 @@ int is_darr_average(int *array, int length){
 // ########################################################################################
 
 
-int is_darr_median(int *array, int length){
+int is_darr_median(int *array, int length, int *result){
 
     /*
         INPUT:
         int *array	...	pointer to an array of int values.
         int length	...	length of that array
+        int *result	...	result value of this function.
     
         OUTPUT:
-        The median value of a array of length "length".
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)        
         
         CHECKS:
         - checks the length of array is greater then 0.
-        - checks for NaN values within the array.
     */
     
     int idx;
@@ -891,12 +937,6 @@ int is_darr_median(int *array, int length){
             longjmp(env, 1);
         }
     
-        // Check for NaN values:
-        for (idx=0; idx<length; idx++){
-            if (isnan(array[idx])){
-                longjmp(env, 2);
-            }
-        }
         // ###########################################
         // ###########################################
         int median;
@@ -907,8 +947,9 @@ int is_darr_median(int *array, int length){
         }
         else{
         
-            int *array_tmp = is_farr_sort(array, length, "asc");
-            if (array_tmp == NULL){
+            int *array_tmp;
+            
+            if (!(is_darr_sort(array, length, "asc", array_tmp))){
                 longjmp(env, 3);
             }
          
@@ -922,11 +963,10 @@ int is_darr_median(int *array, int length){
     // ################################################################
 
     switch(setjmp(env)){
-        case 0: return calc_median(array, length);
-        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n", __FILE__, __func__); return NAN;
-        case 2: printf("ERROR! (%s -> %s)\n>>> The array contains 'NaN' values.\n\n", __FILE__, __func__); return NAN;
-        case 3: printf("ERROR! (%s -> %s)\n>>> Memory fault!\nPlease check function 'is_farr_sort'\n\n", __FILE__, __func__); return NAN;
-        default: printf("Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return NAN;
+        case 0: *result = calc_median(array, length); return EXIT_SUCCESS;
+        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n", __FILE__, __func__); return EXIT_FAILURE;
+        case 3: printf("ERROR! (%s -> %s)\n>>> Memory fault!\nPlease check previous function 'is_farr_sort'\n\n", __FILE__, __func__); return EXIT_FAILURE;
+        default: printf("Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;
     }
 }
 
@@ -935,21 +975,22 @@ int is_darr_median(int *array, int length){
 // ########################################################################################
 
 
-int is_darr_variance(int *array, int length){
+int is_darr_variance(int *array, int length, int *result){
 
 
     /*
         INPUT:
         int *array	...	pointer to an array of int values.
         int length	...	length of that array
+        int *result	...	result value of this function.
     
         OUTPUT:
-        Success: The variance of a array of length "length".
-        Failure: NAN
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)         
         
         CHECKS:
         - checks the length of array is greater then 0.
-        - checks for NaN values within the array.
     */
     
     int idx;
@@ -962,41 +1003,36 @@ int is_darr_variance(int *array, int length){
         if (length <= 0){
             longjmp(env, 1);
         }
-    
-        // check for NaN values:
-        for (idx=0; idx<length; idx++){
-            if (isnan(array[idx])){
-                longjmp(env, 2);
-                break;
-            }
-        }
+
         // ###########################################
         // ###########################################
-        int average = is_farr_average(array, length);
+        int average = 0;
         int sum = 0;
+ 
         
-        // check for NAN
-        if (isnan(average)){
-            longjmp(env, 3);
+        if (!(is_darr_average(array, length, &average))){
+            
+            // calculate variance        
+            for (idx=0; idx<length; idx++){
+        
+                sum += pow((array[idx] - average),2);
+        
+            }     
+            return sum/(int)length;       
         }
-        
-        // calculate variance        
-        for (idx=0; idx<length; idx++){
-        
-            sum += pow((array[idx] - average),2);
-        
+        else{
+            longjmp(env, 2);
         }
-        return sum/(int)length;
         
     }
     // ################################################################
 
     switch(setjmp(env)){
-        case 0: return calc_variance(array, length);
-        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n", __FILE__, __func__); return NAN;
-        case 2: printf("ERROR! (%s -> %s)\n>>> The array contains 'NaN' values.\n\n", __FILE__, __func__); return NAN;
-        case 3: printf("ERROR! (%s -> %s)\n>>> The previous function returned NAN.\n\n", __FILE__, __func__); return NAN;
-        default: printf("Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return NAN;
+        case 0: *result = calc_variance(array, length); return EXIT_SUCCESS;
+        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n", __FILE__, __func__); return EXIT_FAILURE;
+        case 2: printf("ERROR! (%s -> %s)\n>>> The previous function \"is_darr_average()\" returned an error.\n\n",__FILE__, __func__); return EXIT_FAILURE;
+        case 3: printf("ERROR! (%s -> %s)\n>>> The previous function returned NAN.\n\n", __FILE__, __func__); return EXIT_FAILURE;        
+        default: printf("Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;
     }
 }
 
@@ -1005,21 +1041,22 @@ int is_darr_variance(int *array, int length){
 // ########################################################################################
 
 
-int is_darr_stddev(int *array, int length){
+int is_darr_stddev(int *array, int length, int *result){
 
 
     /*
         INPUT:
         int *array	...	pointer to an array of int values.
-        int length	...	length of that array
+        int length	...	length of that array.
+        int *result	...	result value of this function.
     
         OUTPUT:
-        Success: The standard deviation of a array of length "length".
-        Failure: NAN
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)         
         
         CHECKS:
         - checks the length of array is greater then 0.
-        - checks for NaN values within the array.
     */
     
     int idx;
@@ -1033,38 +1070,36 @@ int is_darr_stddev(int *array, int length){
             longjmp(env, 1);
         }
     
-        // Check for NaN values:
-        for (idx=0; idx<length; idx++){
-            if (isnan(array[idx])){
-                longjmp(env, 2);
-            }
-        }
         // ###########################################
         // ###########################################   
-        int variance = is_farr_variance(array, length);
+        int variance;
         
-        // Check for NAN in previous function:
-        if (isnan(variance)){
-            longjmp(env, 3);
-        }
+        if (!(is_darr_variance(array, length, &variance))){
         
-        // Check for variance smaller then 0:
-        if (variance < 0){
-            longjmp(env, 4);
+            // Check for variance smaller then 0:
+            if (variance < 0){
+                longjmp(env, 4);
+            }
+            else{
+                return sqrt(variance);
+            }
         }
         else{
-            return sqrt(variance);
+            longjmp(env, 5);
         }
+        
+
     }
     // ################################################################
 
     switch(setjmp(env)){
-        case 0: return calc_standard_deviation(array, length);
-        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return NAN;
-        case 2: printf("ERROR! (%s -> %s)\n>>> The array contains 'NaN' values.\n\n",__FILE__, __func__); return NAN;
-        case 3: printf("ERROR! (%s -> %s)\n>>> The previous function returned NAN.\n\n",__FILE__, __func__); return NAN; 
-        case 4: printf("ERROR! (%s -> %s)\n>>> The previous function returned a variance smaller then 0.\n\n",__FILE__, __func__); return NAN;        
-        default: printf("Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return NAN;
+        case 0: *result = calc_standard_deviation(array, length); return EXIT_SUCCESS;
+        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return EXIT_FAILURE;
+        case 2: printf("ERROR! (%s -> %s)\n>>> The array contains 'NaN' values.\n\n",__FILE__, __func__); return EXIT_FAILURE;
+        case 3: printf("ERROR! (%s -> %s)\n>>> The previous function returned NAN.\n\n",__FILE__, __func__); return EXIT_FAILURE; 
+        case 4: printf("ERROR! (%s -> %s)\n>>> The previous function \"is_darr_variance()\" returned a variance value smaller then 0.\n\n",__FILE__, __func__); return EXIT_FAILURE;
+        case 5: printf("ERROR! (%s -> %s)\n>>> The previous function \"is_darr_variance()\" returned an error.\n\n",__FILE__, __func__); return EXIT_FAILURE;        
+        default: printf("Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return EXIT_FAILURE;
     }
 }
 
@@ -1073,21 +1108,22 @@ int is_darr_stddev(int *array, int length){
 // ########################################################################################
 
 
-int *is_darr_sort(int *array, int length, char *dir){
+int *is_darr_sort(int *array, int length, char *dir, int *result){
 
     /*
         INPUT:
         int *array	...	pointer to an array of int values.
         int length	...	length of that array
-    
+    	int *result	...	result array of this function.
+    	
         OUTPUT:
-        Success: pointer of ascending or descending sorted array of length "length".
-        Failure: NULL-pointer
+        Outputs an error code:
+        success:	...	pointer of result array.
+        failure:	...	NULL 
 
         
         CHECKS:
         - checks the length of array is greater then 0.
-        - checks for NaN values within the array.
     */
     
     int idx;
@@ -1109,26 +1145,20 @@ int *is_darr_sort(int *array, int length, char *dir){
             longjmp(env, 1);
         }
     
-        // Check for NaN values:
-        for (idx=0; idx<length; idx++){
-            if (isnan(array[idx])){
-                longjmp(env, 2);
-            }
-        }
         // ###########################################
         // ###########################################       
         int *sorted_array;
     
     	sorted_array = (int*) malloc(length * sizeof(int));
     	if (sorted_array == NULL){
-    	    longjmp(env, 3);
+    	    longjmp(env, 2);
     	}
         
         // copy values:
         for (idx=0; idx<length; idx++){
             sorted_array[idx] = array[idx];
         }
-        // return the one and only value if length equal to 1.
+        // return the one and only value if length is equal to 1.
         if (length == 1){
             return sorted_array;
         }
@@ -1146,14 +1176,72 @@ int *is_darr_sort(int *array, int length, char *dir){
     // ################################################################
 
     switch(setjmp(env)){
-        case 0: return sort_array(array, length, dir);
+        case 0: result = sort_array(array, length, dir); return result;
         case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return NULL;
-        case 2: printf("ERROR! (%s -> %s)\n>>> The array contains 'NaN' values.\n\n",__FILE__, __func__); return NULL;
-        case 3: printf("ERROR! (%s -> %s)\n>>> Memory fault!\n\n",__FILE__, __func__); return NULL;
-        case 4: printf("ERROR! (%s -> %s)\n>>> It is only allowed to sort an array in:\nascending (asc) or descending (desc) direction.\n\n",__FILE__, __func__); return NULL;
+        case 2: printf("ERROR! (%s -> %s)\n>>> Memory fault!\n\n",__FILE__, __func__); return NULL;
+        case 3: printf("ERROR! (%s -> %s)\n>>> It is only allowed to sort an array in:\nascending (asc) or descending (desc) direction.\n\n",__FILE__, __func__); return NULL;
         default: printf("Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return NULL;
     }
 
 }
 
+
+// ########################################################################################
+// ########################################################################################
+
+
+int *is_darr_reverse(int *array, int length, int *result){
+
+    /*
+        INPUT:
+        double *array	...	pointer to an array of integer values.
+        int length	...	length of that array
+        int *result	...	result array of this function
+    
+        OUTPUT:
+        Outputs an error code:
+        success:	...	pointer of result array.
+        failure:	...	NULL        
+        
+        CHECKS:
+        - checks the length of array is greater then 0.
+    */
+    
+    int idx, kdx;
+    jmp_buf env;
+    
+    // ######################### FUNCTIONS ###########################
+    int *reverse_array(int *array, int length){
+    
+        // Check for length greater then 0:
+        if (length <= 0){
+            longjmp(env, 1);
+        }
+        // ###########################################
+        // ###########################################       
+        int *reversed_array;
+    
+    	reversed_array = (int*) malloc(length * sizeof(int));
+    	if (reversed_array == NULL){
+    	    longjmp(env, 2);
+    	}
+        
+        // reverse values:
+        for (idx=0, kdx=length-1; idx<length; idx++, kdx--){
+        
+            reversed_array[idx] = array[kdx];
+        }
+        
+        return reversed_array;
+    }
+    // ################################################################
+
+    switch(setjmp(env)){
+        case 0: result = reverse_array(array, length); return result;
+        case 1: printf("ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return NULL;
+        case 2: printf("ERROR! (%s -> %s)\n>>> Memory fault!\n\n",__FILE__, __func__); return NULL;
+        default: printf("Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return NULL;
+    }
+
+}
 
