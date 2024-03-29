@@ -12,27 +12,27 @@
 
 
 // functions for arrays of doubles
-int is_farr_sum(double *array, int length, double *result);	// sum of all values within the array
-int is_farr_maximum(double *array, int length, double *result);	// maximum value of a double array
-int is_farr_minimum(double *array, int length, double *result);	// minimum value of a double array
-int is_farr_median(double *array, int length, double *result);	// median of a double array
-int is_farr_average(double *array, int length, double *result);	// average of a double array
-int is_farr_variance(double *array, int length, double *result);// variance of a double array
-int is_farr_stddev(double *array, int length, double *result);	// standarddeviation of a double array
-int is_farr_sort(double *array, int length, char *dir);		// sorts an double array ascending or descending
-int is_farr_reverse(double *array, int length);			// will reverse an array of doubles
+int is_farr_sum(double *array, int length, double *result);	// sum of over all values of an array				(dtype: double)
+int is_farr_maximum(double *array, int length, double *result);	// maximum value of an array 					(dtype: double)
+int is_farr_minimum(double *array, int length, double *result);	// minimum value of an array 					(dtype: double)
+int is_farr_median(double *array, int length, double *result);	// median of an array						(dtype: double)
+int is_farr_average(double *array, int length, double *result);	// average of an array						(dtype: double)
+int is_farr_variance(double *array, int length, double *result);// variance of an array						(dytpe: double)
+int is_farr_stddev(double *array, int length, double *result);	// standard deviation of an array				(dtype: double)
+int is_farr_sort(double *array, int length, char *dir);		// sorts an array in ascending or descending order		(dtype: double)
+int is_farr_reverse(double *array, int length);			// changes the order of values in an array in reverse direction	(dtype: double)
 
 
 // functions for arrays of integers
-int is_darr_sum(int *array, int length, double *result);	// sum of all values within the array
-int is_darr_maximum(int *array, int length, double *result);	// maximum value of a double array
-int is_darr_minimum(int *array, int length, double *result);	// minimum value of a double array
-int is_darr_median(int *array, int length, double *result);	// median of a double array
-int is_darr_average(int *array, int length, double *result);	// average of a double array
-int is_darr_variance(int *array, int length, double *result);	// variance of a double array
-int is_darr_stddev(int *array, int length, double *result);	// standarddeviation of a double array
-int is_darr_sort(int *array, int length, char *dir);		// sorts an double array ascending or descending
-int is_darr_reverse(int *array, int length);	// changes the order of the values of the input array in reversed direction
+int is_darr_sum(int *array, int length, double *result);	// sum over all values of an array				(dtype: integer)
+int is_darr_maximum(int *array, int length, double *result);	// maximum value of an array					(dtype: integer)
+int is_darr_minimum(int *array, int length, double *result);	// minimum value of an array					(dytpe: integer)
+int is_darr_median(int *array, int length, double *result);	// median of an array						(dtype: integer)
+int is_darr_average(int *array, int length, double *result);	// average of an array						(dtype: integer)
+int is_darr_variance(int *array, int length, double *result);	// variance of an array						(dtype: integer)
+int is_darr_stddev(int *array, int length, double *result);	// standardd eviation of an array				(dtype: integer)
+int is_darr_sort(int *array, int length, char *dir);		// sorts an array in ascending or descending order		(dtype: integer)
+int is_darr_reverse(int *array, int length);			// changes the order of values in an array in reverse direction	(dtype: integer)
 
 // ###############################################################################################################################################################################
 // ###############################################################################################################################################################################
