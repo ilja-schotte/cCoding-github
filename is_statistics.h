@@ -12,27 +12,29 @@
 
 
 // functions for arrays of doubles
-int is_farr_sum(double *array, int length, double *result);	// sum of over all values of an array				(dtype: double)
-int is_farr_maximum(double *array, int length, double *result);	// maximum value of an array 					(dtype: double)
-int is_farr_minimum(double *array, int length, double *result);	// minimum value of an array 					(dtype: double)
-int is_farr_median(double *array, int length, double *result);	// median of an array						(dtype: double)
-int is_farr_average(double *array, int length, double *result);	// average of an array						(dtype: double)
-int is_farr_variance(double *array, int length, double *result);// variance of an array						(dytpe: double)
-int is_farr_stddev(double *array, int length, double *result);	// standard deviation of an array				(dtype: double)
-int is_farr_sort(double *array, int length, char *dir);		// sorts an array in ascending or descending order		(dtype: double)
-int is_farr_reverse(double *array, int length);			// changes the order of values in an array in reverse direction	(dtype: double)
+int is_farr_sum(double *array, int length, double *result);		// sum of over all values of an array				(dtype: double)
+int is_farr_maximum(double *array, int length, double *result);		// maximum value of an array 					(dtype: double)
+int is_farr_minimum(double *array, int length, double *result);		// minimum value of an array 					(dtype: double)
+int is_farr_median(double *array, int length, double *result);		// median of an array						(dtype: double)
+int is_farr_average(double *array, int length, double *result);		// average of an array						(dtype: double)
+int is_farr_variance(double *array, int length, double *result);	// variance of an array						(dytpe: double)
+int is_farr_stddev(double *array, int length, double *result);		// standard deviation of an array				(dtype: double)
+int is_farr_sort(double *array, int length, char *type, char *dir);	// sorts an array in ascending or descending order		(dtype: double)
+int is_farr_reverse(double *array, int length);				// changes the order of values in an array in reverse direction	(dtype: double)
+int is_farr_isin(double *array, int length, double searchfor, int *in);	// checks if an double value exists in an double array		(dtype: double)
 
 
 // functions for arrays of integers
-int is_darr_sum(int *array, int length, double *result);	// sum over all values of an array				(dtype: integer)
-int is_darr_maximum(int *array, int length, double *result);	// maximum value of an array					(dtype: integer)
-int is_darr_minimum(int *array, int length, double *result);	// minimum value of an array					(dytpe: integer)
-int is_darr_median(int *array, int length, double *result);	// median of an array						(dtype: integer)
-int is_darr_average(int *array, int length, double *result);	// average of an array						(dtype: integer)
-int is_darr_variance(int *array, int length, double *result);	// variance of an array						(dtype: integer)
-int is_darr_stddev(int *array, int length, double *result);	// standardd eviation of an array				(dtype: integer)
-int is_darr_sort(int *array, int length, char *dir);		// sorts an array in ascending or descending order		(dtype: integer)
-int is_darr_reverse(int *array, int length);			// changes the order of values in an array in reverse direction	(dtype: integer)
+int is_darr_sum(int *array, int length, double *result);		// sum over all values of an array				(dtype: integer)
+int is_darr_maximum(int *array, int length, double *result);		// maximum value of an array					(dtype: integer)
+int is_darr_minimum(int *array, int length, double *result);		// minimum value of an array					(dytpe: integer)
+int is_darr_median(int *array, int length, double *result);		// median of an array						(dtype: integer)
+int is_darr_average(int *array, int length, double *result);		// average of an array						(dtype: integer)
+int is_darr_variance(int *array, int length, double *result);		// variance of an array						(dtype: integer)
+int is_darr_stddev(int *array, int length, double *result);		// standardd eviation of an array				(dtype: integer)
+int is_darr_sort(int *array, int length, char *type, char *dir);	// sorts an array in ascending or descending order		(dtype: integer)
+int is_darr_reverse(int *array, int length);				// changes the order of values in an array in reverse direction	(dtype: integer)
+int is_darr_isin(int *array, int length, int searchfor, int *in);	// checks if an integer value exists in an integer array	(dtype: integer)
 
 // ###############################################################################################################################################################################
 // ###############################################################################################################################################################################
@@ -394,7 +396,7 @@ int is_farr_median(double *array, int length, double *result){
         }
         else{
         
-            if (!(is_farr_sort(array, length, "asc"))){
+            if (!(is_farr_sort(array, length, "quick", "asc"))){
             
                 median = (length % 2) ? array[(int)(length/2)] : (array[((int)(length/2)-1)] + array[(int)(length/2)]) / 2.0;
                 
@@ -584,7 +586,7 @@ int is_farr_stddev(double *array, int length, double *result){
 // ########################################################################################
 
 
-int is_farr_sort(double *array, int length, char *dir){
+int is_farr_sort(double *array, int length, char *type, char *dir){
 
     /*
         Sorts the values of an input array (double *array) inplace in ascending or descending direction.
@@ -605,23 +607,25 @@ int is_farr_sort(double *array, int length, char *dir){
         - checks for NaN values within the array.
     */
     
+
+    
     int idx;
+    int cnt;
+    double tmp;
     jmp_buf env;
     
     // ######################### FUNCTIONS ###########################
     int asc_compare(const void *val1, const void *val2){
-        return *(double*)val1 < *(double*)val2;
+        return *(double*)val1 > *(double*)val2;
     }
     
     int desc_compare(const void *val1, const void *val2){
-        return *(double*)val1 > *(double*)val2;   
+        return *(double*)val1 < *(double*)val2;   
     }
     
-    void sort_array(double *array, int length, char *dir){
+    void sort_array(double *array, int length, char *type, char *dir){
     
-        
-        // ###########################################
-        // ########################################### 
+
            
         // Check for length greater then 0:
         if (length <= 0){
@@ -635,26 +639,83 @@ int is_farr_sort(double *array, int length, char *dir){
             }
         }
         
+               
         // sort in ascending or descending order.
         if (length > 1){
-            if (strcmp(dir, "asc")){
-                qsort(array, length, sizeof(double), asc_compare);
+        
+            if (!(strcmp(type, "quick"))){
+                
+                // quick-sort algorithm
+                if (!(strcmp(dir, "asc"))){
+                
+                    // ascending
+                    qsort(array, length, sizeof(double), asc_compare);
+                }
+                else if (!(strcmp(dir, "desc"))){
+                
+                    // descending
+                    qsort(array, length, sizeof(double), desc_compare);        
+                }
+                else{
+                    longjmp(env, 3);
+                }
             }
-            else if (strcmp(dir, "desc")){
-                qsort(array, length, sizeof(double), desc_compare);        
+            else if (!(strcmp(type, "bubble"))){
+                
+                // bubble-sort algorithm
+                if (!(strcmp(dir, "asc"))){
+                    
+                    // ascending 
+                    do{
+                        cnt = 0;
+                        
+                        for (idx=0; idx<length-1; idx++){
+                        
+                            if (array[idx] > array[idx+1]){
+                            
+                                tmp = array[idx+1];
+                                array[idx+1] = array[idx];
+                                array[idx] = tmp;
+                                cnt = 1;
+                            }
+                        }                 
+                    }while(cnt);
+                }
+                else if (!(strcmp(dir, "desc"))){
+                    
+                    // descending 
+                    do{
+                        cnt = 0;
+                        
+                        for (idx=0; idx<length-1; idx++){
+                        
+                            if (array[idx] < array[idx+1]){
+                            
+                                tmp = array[idx+1];
+                                array[idx+1] = array[idx];
+                                array[idx] = tmp;
+                                cnt = 1;
+                            }
+                        }                 
+                    }while(cnt);
+                }
+                else{
+                    longjmp(env, 3);
+                }
             }
             else{
-                longjmp(env, 3);
+                longjmp(env, 4);
             }
         }
     }
     // ################################################################
 
     switch(setjmp(env)){
-        case 0: sort_array(array, length, dir); return EXIT_SUCCESS;
+        case 0: sort_array(array, length, type, dir); return EXIT_SUCCESS;
         case 1: fprintf(stderr, "ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return EXIT_FAILURE;
         case 2: fprintf(stderr, "ERROR! (%s -> %s)\n>>> The array contains 'NaN' values.\n\n",__FILE__, __func__); return EXIT_FAILURE;
         case 3: fprintf(stderr, "ERROR! (%s -> %s)\n>>> It is only allowed to sort an array in:\nascending (asc) or descending (desc) direction.\n\n",__FILE__, __func__); return EXIT_FAILURE;
+        case 4: fprintf(stderr, "ERROR! (%s -> %s)\n>>> Currently only quick-sort (quick) or bubble-sort (bubble) is supported.\n\n",__FILE__, __func__); return EXIT_FAILURE;
         default: fprintf(stderr, "Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return EXIT_FAILURE;
     }
 
@@ -726,6 +787,80 @@ int is_farr_reverse(double *array, int length){
         default: fprintf(stderr, "Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return EXIT_FAILURE;
     }
 
+}
+
+
+// ########################################################################################
+// ########################################################################################
+
+
+int is_farr_isin(double *array, int length, double searchfor, int *in){
+
+    /*
+        DESCRIPTION:
+        Checks if an double value exists in an input array of doubles.
+    
+        INPUT:
+        int *array	...	pointer to an array of integer values.
+        int length	...	length of that array
+        double searchfor...	value to search for
+        int in		...	shows if the value you search for is part of the input array.
+        			0 ... is part of this array
+        			1 ... is not part of this array
+        
+        OUTPUT:
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)     
+        
+        CHECKS:
+        - checks the length of array is greater then 0.
+    */
+
+    int idx;
+    double *ptr_pos;
+    jmp_buf env;
+    
+
+    // ######################### FUNCTIONS ###########################
+    int compare(const void *z1, const void *z2){
+        return (*(double *)z1 - *(double *)z2 );
+    }
+    
+    
+    void search_value(double *array, int length, double searchfor, int *in){
+    
+        // Check for length greater then 0:    
+        if (length <= 0){
+            longjmp(env, 1);
+        }
+        
+        // search for value:
+        if (length >= 1){
+        
+            // array has to be sort at first.
+            if (!(is_farr_sort(array, length, "quick", "asc"))){
+                
+                ptr_pos = (double *)bsearch(&searchfor, array, length, sizeof(double), compare);
+                if (ptr_pos == NULL){
+                    
+                    *in = 1;
+                }
+                else{
+                    *in = 0;
+                }
+            }
+            else{
+                longjmp(env, 2);
+            }
+        }
+    }
+    switch(setjmp(env)){
+        case 0: search_value(array, length, searchfor, in); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return EXIT_FAILURE;
+        case 2: fprintf(stderr, "ERROR! (%s -> %s)\n>>> The previous function \"is_darr_sort()\"returned an error.\n\n",__FILE__, __func__); return EXIT_FAILURE; 
+        default: fprintf(stderr, "Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return EXIT_FAILURE;
+    }
 }
 
 // ###############################################################################################################################################################################
@@ -1046,7 +1181,7 @@ int is_darr_median(int *array, int length, double *result){
         }
         else{
         
-            if (!(is_darr_sort(array, length, "asc"))){
+            if (!(is_darr_sort(array, length, "quick", "asc"))){
             
                 median = (length % 2) ? (double)array[(int)(length/2)] : (array[((int)(length/2)-1)] + array[(int)(length/2)]) / 2.0;            
                 *result = median;
@@ -1208,7 +1343,7 @@ int is_darr_stddev(int *array, int length, double *result){
 // ########################################################################################
 
 
-int is_darr_sort(int *array, int length, char *dir){
+int is_darr_sort(int *array, int length, char *type, char *dir){
 
     /*
         DESCRIPTION:
@@ -1218,6 +1353,9 @@ int is_darr_sort(int *array, int length, char *dir){
         INPUT:
         int *array	...	pointer to an array of int values.
         int length	...	length of that array
+        char *type	...	used sort algorithm:
+        			"quick":	quick-sort
+        			"bubble":	bubble-sort 
     	
         OUTPUT:
         Outputs an error code:
@@ -1229,47 +1367,103 @@ int is_darr_sort(int *array, int length, char *dir){
         - checks the length of array is greater then 0.
     */
     
-    int idx;
+    int idx;        
+    int cnt;
+    double tmp;
+    
     jmp_buf env;
     
     // ######################### FUNCTIONS ###########################
     int asc_compare(const void *val1, const void *val2){
-        return *(int*)val1 < *(int*)val2;
+        return *(int*)val1 > *(int*)val2;
     }
     
     int desc_compare(const void *val1, const void *val2){
-        return *(int*)val1 > *(int*)val2;   
+        return *(int*)val1 < *(int*)val2;   
     }
     
-    void sort_array(int *array, int length, char *dir){
+    void sort_array(int *array, int length, char *type, char *dir){    
     
         // Check for length greater then 0:
         if (length <= 0){
             longjmp(env, 1);
         }
-    
-        // ###########################################
-        // ########################################### 
-
         // return the one and only value if length is equal to 1.
         if (length > 1){
-            if (strcmp(dir, "asc")){
-                qsort(array, length, sizeof(int), asc_compare);
+        
+            // check for sort algorithm
+            if (!(strcmp(type, "quick"))){
+        
+                // quick-sort algorithm
+                if (!(strcmp(dir, "asc"))){
+                    
+                    // ascending
+                    qsort(array, length, sizeof(int), asc_compare);
+                }
+                else if (!(strcmp(dir, "desc"))){
+                
+                    // descending
+                    qsort(array, length, sizeof(int), desc_compare);        
+                }
+                else{
+                    longjmp(env, 2);
+                }
             }
-            else if (strcmp(dir, "desc")){
-                qsort(array, length, sizeof(int), desc_compare);        
+            else if (!(strcmp(type, "bubble"))){
+            
+                // bubble-sort algorithm
+                if (!(strcmp(dir, "asc"))){
+                
+                    // ascending
+                    do{
+                        cnt = 0;
+                    
+                        for(idx=0; idx<length-1; idx++){
+                    
+                            if (array[idx] > array[idx+1]){
+                        
+                                tmp = array[idx+1];
+                                array[idx+1] = array[idx];
+                                array[idx] = tmp;
+                                cnt = 1;
+                            }
+                        }
+                    }while(cnt);
+                }
+                else if (!(strcmp(dir, "desc"))){
+                 
+                    // descending
+                    do{
+                        cnt = 0;
+                    
+                        for(idx=0; idx<length-1; idx++){
+                    
+                            if (array[idx] < array[idx+1]){
+                        
+                                tmp = array[idx+1];
+                                array[idx+1] = array[idx];
+                                array[idx] = tmp;
+                                cnt = 1;
+                            }
+                        }
+                    }while(cnt);
+                }
+                else{
+                    longjmp(env, 2);
+                }
             }
             else{
-                longjmp(env, 2);
+                longjmp(env, 3);
             }
         }
     }
     // ################################################################
 
     switch(setjmp(env)){
-        case 0: sort_array(array, length, dir); return EXIT_SUCCESS;
+        case 0: sort_array(array, length, type, dir); return EXIT_SUCCESS;
         case 1: fprintf(stderr, "ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return EXIT_FAILURE;
         case 2: fprintf(stderr, "ERROR! (%s -> %s)\n>>> It is only allowed to sort an array in:\nascending (asc) or descending (desc) direction.\n\n",__FILE__, __func__); return EXIT_FAILURE;
+        case 3: fprintf(stderr, "ERROR! (%s -> %s)\n>>> Currently only quick-sort (quick) or bubble-sort (bubble) is supported.\n\n",__FILE__, __func__); return EXIT_FAILURE;
         default: fprintf(stderr, "Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return EXIT_FAILURE;
     }
 
@@ -1330,9 +1524,126 @@ int is_darr_reverse(int *array, int length){
     switch(setjmp(env)){
         case 0: reverse_array(array, length); return EXIT_SUCCESS;
         case 1: fprintf(stderr, "ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return EXIT_FAILURE;
-        case 2: fprintf(stderr, "ERROR! (%s -> %s)\n>>> Memory fault!\n\n",__FILE__, __func__); return EXIT_FAILURE;
         default: fprintf(stderr, "Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return EXIT_FAILURE;
     }
 
 }
+
+
+// ########################################################################################
+// ########################################################################################
+
+
+int is_darr_isin(int *array, int length, int searchfor, int *in){
+
+    /*
+        DESCRIPTION:
+        Checks if an integer value exists in an input array of integers.
+    
+        INPUT:
+        int *array	...	pointer to an array of integer values.
+        int length	...	length of that array
+        int searchfor	...	value to search for
+        int in		...	shows if the value you search for is part of the input array.
+        			0 ... is part of this array
+        			1 ... is not part of this array
+        
+        OUTPUT:
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)     
+        
+        CHECKS:
+        - checks the length of array is greater then 0.
+    */
+
+    int idx;
+    int *ptr_pos;
+    jmp_buf env;
+    
+
+    // ######################### FUNCTIONS ###########################
+    int compare(const void *z1, const void *z2){
+        return (*(int *)z1 - *(int *)z2 );
+    }
+    
+    
+    void search_value(int *array, int length, int searchfor, int *in){
+    
+        // Check for length greater then 0:    
+        if (length <= 0){
+            longjmp(env, 1);
+        }
+        
+        // search for value:
+        if (length >= 1){
+        
+            // array has to be sort at first.
+            if (!(is_darr_sort(array, length, "quick", "asc"))){
+                
+                ptr_pos = (int *)bsearch(&searchfor, array, length, sizeof(int), compare);
+                
+                for (idx=0; idx<length; idx++){
+                    printf("%d ", array[idx]);
+                }
+                printf("\n");
+                
+                if (ptr_pos == NULL){
+                    
+                    *in = 1;
+                }
+                else{
+                    *in = 0;
+                }
+            }
+            else{
+                longjmp(env, 2);
+            }
+        }
+    }
+    switch(setjmp(env)){
+        case 0: search_value(array, length, searchfor, in); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR! (%s -> %s)\n>>> The length of an array cannot be smaller/equal to zero.\n\n",__FILE__, __func__); return EXIT_FAILURE;
+        case 2: fprintf(stderr, "ERROR! (%s -> %s)\n>>> The previous function \"is_darr_sort()\"returned an error.\n\n",__FILE__, __func__); return EXIT_FAILURE; 
+        default: fprintf(stderr, "Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n",__FILE__, __func__); return EXIT_FAILURE;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
