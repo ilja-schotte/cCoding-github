@@ -41,7 +41,7 @@ struct DWDWeatherReportPoi{
     char path[100]; 			// path where you can find that file
     char stationId[10];			// id of the corresponding station
     unsigned char number_parameters;	// number of all parameters you want to import from the CSV file.
-    char wanted_parameters[50][100];	// array of wanted parameters of the csv file
+    char *wanted_parameters[30][2];	// array of wanted parameters of the csv file
 
     struct MeasuredData groundData; 
 };
@@ -55,7 +55,7 @@ int read_main_arguments(int argc, char *argv[], struct DWDWeatherReportPoi *Data
 int open_CSVfile(struct DWDWeatherReportPoi *Dataset);					// Opens the file under the given path and filename and passes a filepointer to the dataset object.
 int close_CSVfile(struct DWDWeatherReportPoi *Dataset);					// Closes the file by closing the corresponding filepointer to this file.
 int allocate_cmatrix(char **ptr, int rows, int cols);					// allocates a rows x cols matrix of datatype char.
-
+int show_dataMatrix(struct DWDWeatherReportPoi *Dataset);				// shows the dataMatrix with the observation data imported from the csv file.
 
 
 // ###############################################################################################################################################################################
@@ -305,9 +305,9 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
         
             for (idx=0; idx<Dataset->number_parameters; idx++){
             
-                if (strcmp(Dataset->wanted_parameters[idx], parameter) == 0){
+                if (strcmp(Dataset->wanted_parameters[idx][0], parameter) == 0){
                     
-                    //Dataset->groundData.inputDataMatrix[0][idx], parameter
+                    strcpy(Dataset->groundData.inputDataMatrix[0][idx],Dataset->wanted_parameters[idx][1]);
                     
                     
                     break;
@@ -388,6 +388,55 @@ int close_CSVfile(struct DWDWeatherReportPoi *Dataset){
 // #####################################################################################################
 
 
+int show_dataMatrix(struct DWDWeatherReportPoi *Dataset){
+
+    /*
+        DESCRIPTION:
+        Shows the data matrix with the observation data imported from the csv file.
+    
+        INPUT:
+        struct DWDWeatherReportPoi *Dataset	...	pointer to the corresponding dataset.
+    
+        OUTPUT:
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)
+        
+        CHECKS:
+        - 
+    */
+
+    int idx, jdx; 
+    jmp_buf env;
+    
+    // ########################################### functions ########################################### 
+    
+    void show(struct DWDWeatherReportPoi *Dataset){
+    
+        // rows
+        for (idx=0; idx<Dataset->groundData.fileContent.numRows; idx++){
+        
+            // columns:
+            for (jdx=0; jdx<Dataset->number_parameters; jdx++){
+            
+                printf("%8s",Dataset->groundData.inputDataMatrix[idx][jdx]);
+            }
+            printf("\n");
+        }
+    }
+    // ################################################################################################# 
+       
+    switch(setjmp(env)){
+        case 0: show(Dataset); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: (%s -> %s)\n>>> %s\n", __FILE__, __func__, strerror(errno)); return EXIT_FAILURE;
+        default: fprintf(stderr,"Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;          
+
+    }
+}
+
+
+// #####################################################################################################
+// #####################################################################################################
 
 
 

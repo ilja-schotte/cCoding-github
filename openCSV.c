@@ -21,21 +21,22 @@ int main(int argc, char *argv[]){
         .path = "./",
         .number_parameters = 15,
         .wanted_parameters = {
-            "Datum",
-            "Uhrzeit (UTC)",
-            "Wolkenbedeckung",
-            "Taupunkttemperatur (2m)",
-            "Temperatur (2m)",
-            "Sichtweite",
-            "Windboen (letzte Stunde)",
-            "Windrichtung",
-            "Windgeschwindigkeit",
-            "Niederschlag (letzte Stunde)",
-            "aktuelles Wetter",
-            "Druck (auf Meereshoehe)",
-            "Relative Feuchte",
-            "Schneehoehe",
-            "Sonnenscheindauer (letzte Stunde)"},
+            {"Datum", "date"},
+            {"Uhrzeit (UTC)", "time"},
+            {"Wolkenbedeckung", "NN"},
+            {"Taupunkttemperatur (2m)", "TD"},
+            {"Temperatur (2m)", "TT"},
+            {"Sichtweite", "VV"},
+            {"Windboen (letzte Stunde)", "FXH"},
+            {"Windrichtung", "DD"},
+            {"Windgeschwindigkeit", "FF"},
+            {"Niederschlag (letzte Stunde)", "RR"},
+            {"aktuelles Wetter", "WW"},
+            {"Druck (auf Meereshoehe)", "PP"},
+            {"Relative Feuchte", "RH"},
+            {"Schneehoehe", "SND"},
+            {"Sonnenscheindauer (letzte Stunde)", "SD"}
+        },
         .groundData = {
             .fileContent = {
                 .numRows = 0,
@@ -70,6 +71,11 @@ int main(int argc, char *argv[]){
         return 1;
     }
     
+    err = show_dataMatrix(&Dataset);
+    if (err == EXIT_FAILURE){
+        return 1;
+    }
+    
     
     // free rows of raw file content
     for (idx=0; idx<Dataset.groundData.fileContent.numRows; idx++){
@@ -93,13 +99,6 @@ int main(int argc, char *argv[]){
     return 0;
 
 }
-
-
-
-
-
-
-
 
 
 
