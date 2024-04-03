@@ -16,24 +16,20 @@
    Reads all wanted meteorologic parameters and copies these information into a private struct. 
 */
 
+struct file{
+
+    FILE *filePointer;			// file pointer to read the file
+    unsigned short numRows;		// Number of rows of the CSV file.
+    char **rawRows;			// Matrix filled with the raw content of each rows of the CSV file.
+    
+
+};
+
 
 struct MeasuredData{
 
-    char MDate[24][11];			// measured date			"dd.mm.yyyy"
-    char MTime[24][6];			// measured time			"HH:MM"
-    unsigned char *N[24];		// cloud cover				%
-    float *DP[24];			// dew point				°C		
-    float *TT[24];			// temperature				°C
-    float *VV[24];			// visibility				km
-    char *FX[24];			// maximum gust in last hour		km/h
-    char *FF[24];			// wind speed last 10 min		km/h	
-    unsigned short *DD[24];		// wind direction			°
-    float *RRh[24];			// precipitation last hour		mm
-    char *WW[24];			// present weather			0 to 99
-    char *RH[24];			// relative humidity			%
-    unsigned short *PP[24];		// Pressure reduced to sea level 	hPa
-    unsigned short *SND[24];		// snowdepth				cm
-    unsigned char *SD[24];		// sunshine duration last hour		min 
+    struct file fileContent;		// Content of the CSV file.
+    char ***inputDataMatrix;		// Matrix filled with the data from the CSV file.
     
 };
 
@@ -44,8 +40,7 @@ struct DWDWeatherReportPoi{
     char filename[100];			// filename of the file you want to read
     char path[100]; 			// path where you can find that file
     char stationId[10];			// id of the corresponding station
-    FILE *filePointer;			// file pointer to read the file
-    int number_parameters;		// number of all parameters you want of the csv file
+    unsigned char number_parameters;	// number of all parameters you want to import from the CSV file.
     char wanted_parameters[50][100];	// array of wanted parameters of the csv file
 
     struct MeasuredData groundData; 
@@ -180,13 +175,13 @@ int open_CSVfile(struct DWDWeatherReportPoi *Dataset){
         // copy the path of the file to the temporary path variable.
         strcpy(file_tmp, Dataset->path);
     
-        Dataset->filePointer = fopen(strcat(file_tmp, Dataset->filename), "r");
+        Dataset->groundData.fileContent.filePointer = fopen(strcat(file_tmp, Dataset->filename), "r");
         
-        if (Dataset->filePointer == NULL){
+        if (Dataset->groundData.fileContent.filePointer == NULL){
             longjmp(env, 1);
         }
         else{
-            fprintf(stdout, ">> Read file: %s\n",file_tmp);
+            fprintf(stdout, ">> File opened: %s\n",file_tmp);
         }
     }
     // #################################################################################################
@@ -222,23 +217,123 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
     */
     
     jmp_buf env;
-    int idx;
+    int idx, jdx, kdx;
     
     // ########################################### functions ###########################################          
     void read_data(struct DWDWeatherReportPoi *Dataset){
     
         int row_length = (int)USHRT_MAX;	// USHRT_MAX = 65535
         char row[row_length];
+        char *parameter;
         
         
-    
-
-    
+        // get number of rows of the CSV file.
+        while (fgets(row, row_length, Dataset->groundData.fileContent.filePointer)){
+            Dataset->groundData.fileContent.numRows++;
+        }
+        
+        // Number of rows shouldnt be 0 or less;
+        if ((Dataset->groundData.fileContent.numRows) == 0){
+            longjmp(env, 1);
+        }
+        
+        // Allocate memory:
+        Dataset->groundData.fileContent.rawRows = (char**) malloc(Dataset->groundData.fileContent.numRows * sizeof(char*));
+        if (Dataset->groundData.fileContent.rawRows == NULL){
+            longjmp(env, 2);
+        }
+        else{
+            for (idx=0; idx<Dataset->groundData.fileContent.numRows; idx++){
+                Dataset->groundData.fileContent.rawRows[idx] = (char*) malloc(row_length * sizeof(char));
+                if (Dataset->groundData.fileContent.rawRows[idx] == NULL){
+                    longjmp(env, 2);
+                }
+            }
+        }
+        
+        // Set file pointer to the start of the csv file if it is not already.
+        if (ftell(Dataset->groundData.fileContent.filePointer) != 0){
+            fseek(Dataset->groundData.fileContent.filePointer,0,SEEK_SET);
+        }
+        
+        // copy row content of the CSV file to the allocated memory.
+        for (idx=0; idx<Dataset->groundData.fileContent.numRows; idx++){
+        
+            if (fgets(Dataset->groundData.fileContent.rawRows[idx], row_length, Dataset->groundData.fileContent.filePointer) != NULL){
+                continue;
+            }
+            else{
+                longjmp(env, 2);
+            }
+        }        
+        
+        // Allocate the final data matrix to import the data we want:
+        Dataset->groundData.inputDataMatrix = (char***) malloc(Dataset->groundData.fileContent.numRows * sizeof(char**));
+        if (Dataset->groundData.inputDataMatrix == NULL){
+            longjmp(env, 2);
+        }
+        else{
+            for (idx=0; idx<Dataset->groundData.fileContent.numRows; idx++){
+            
+                Dataset->groundData.inputDataMatrix[idx] = (char**) malloc(Dataset->number_parameters * sizeof(char*));
+                if (Dataset->groundData.inputDataMatrix[idx] == NULL){
+                    longjmp(env, 2);
+                }
+                else{
+                    for (jdx=0; jdx<Dataset->number_parameters; jdx++){
+                    
+                        Dataset->groundData.inputDataMatrix[idx][jdx] = (char*) malloc(8 * sizeof(char));
+                        if (Dataset->groundData.inputDataMatrix[idx][jdx] == NULL){
+                            longjmp(env, 2);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // fill all these cells with the wanted data out of the CSV file.
+        // Get and copy the station id to the dataset matrix:
+        strcpy(Dataset->stationId,strtok(Dataset->groundData.fileContent.rawRows[1], ";"));
+        if ((int)strlen(Dataset->stationId) <= 0){
+            longjmp(env, 3);
+        }
+        
+        // search for your wanted parameters and copy the corresponding values to the dataset matrix.
+        parameter = strtok(Dataset->groundData.fileContent.rawRows[2], ";");
+        
+        while (parameter != NULL){
+        
+            for (idx=0; idx<Dataset->number_parameters; idx++){
+            
+                if (strcmp(Dataset->wanted_parameters[idx], parameter) == 0){
+                    
+                    //Dataset->groundData.inputDataMatrix[0][idx], parameter
+                    
+                    
+                    break;
+                }
+                else{
+                    // parameter not wanted:
+                    continue;
+                }
+            }
+            parameter = strtok(NULL, ";");
+        }
+        
+        
+        
+        
+        
+        fprintf(stdout, ">> File read: %s%s\n", Dataset->path, Dataset->filename);
     }
     // #################################################################################################
     
     switch(setjmp(env)){
         case 0: read_data(Dataset); return EXIT_SUCCESS;
+        case 1: fprintf(stderr,"ERROR: (%s -> %s)\n>>> The number of rows of the CSV file shouldnt be 0.\n\n", __FILE__, __func__); return EXIT_FAILURE;
+        case 2: fprintf(stderr, "ERROR: (%s -> %s)\n>>> %s\n", __FILE__, __func__, strerror(errno)); return EXIT_FAILURE;
+        case 3: fprintf(stderr, "ERROR: (%s -> %s)\n>>> Import of station id from the CSV file failed!\n\
+                                                        The length of the imported stations id is equal to 0.\n", __FILE__, __func__); return EXIT_FAILURE;              
         default: fprintf(stderr,"Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;
     }
 }
@@ -271,9 +366,9 @@ int close_CSVfile(struct DWDWeatherReportPoi *Dataset){
     // ########################################### functions ###########################################      
     void close_file(struct DWDWeatherReportPoi *Dataset){
     
-        if (fclose(Dataset->filePointer) == EXIT_SUCCESS){
+        if (fclose(Dataset->groundData.fileContent.filePointer) == EXIT_SUCCESS){
         
-            fprintf(stdout, ">> file closed: %s%s\n",Dataset->path, Dataset->filename);            
+            fprintf(stdout, ">> File closed: %s%s\n",Dataset->path, Dataset->filename);            
         }
         else{
             longjmp(env, 1);
@@ -293,61 +388,7 @@ int close_CSVfile(struct DWDWeatherReportPoi *Dataset){
 // #####################################################################################################
 
 
-int allocate_cmatrix(char **ptr, int rows, int cols){
 
-    /*
-        DESCRIPTION:
-        Allocates memory for a matrix of rows x columns fields. 
-    
-        INPUT:
-        void *ptr	...	pointer of type char to the allocated memory.
-        char *datatype	...	datatype of the allocated memory.
-        int rows	...	number of rows.
-        int cols	...	number of columns.
-    
-        OUTPUT:
-        Outputs an error code:
-        success:	...	1 (EXIT_SUCCESS)
-        failure:	...	0 (EXIT_FAILURE)
-        
-        CHECKS:
-        - rows and columns must be greater than 0
-    */
-    
-    jmp_buf env;
-    int idx;
-    
-    // ########################################### functions ###########################################      
-    void allocate(char **ptr, int rows, int cols){
-    
-        // check if rows and cols are greater than 0
-        if ((rows <= 0) || (cols <= 0)){
-            longjmp(env, 1);
-        }
-        
-        ptr = (char **) malloc(cols * sizeof(char*));
-        if (ptr == NULL){
-            longjmp(env, 2);
-        }
-        else{
-            for (idx=0; idx<cols; idx++){
-                ptr[idx] = (char *) malloc(rows * sizeof(char));
-                if (ptr[idx] == NULL){
-                    longjmp(env, 2);
-                }
-            }
-        }
-    }
-    // #################################################################################################    
-    
-    switch(setjmp(env)){
-        case 0: allocate(ptr, rows, cols); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: (%s -> %s)\n>>> The size of rows and columns must be greater than 0.\n\n", __FILE__, __func__); return EXIT_FAILURE;       
-        case 2: fprintf(stderr, "ERROR: (%s -> %s)\n>>> %s\n", __FILE__, __func__, strerror(errno)); return EXIT_FAILURE;
-        default: fprintf(stderr,"Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;
-    }
-
-}
 
 
 
