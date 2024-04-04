@@ -20,8 +20,10 @@ struct file{
 
     FILE *filePointer;			// file pointer to read the file
     unsigned short numRows;		// Number of rows of the CSV file.
+    unsigned short numCols;		// Number of columns of the CSV file.
     char **rawRows;			// Matrix filled with the raw content of each rows of the CSV file.
-    
+    char headerParameterRow;		// Row of the parameters your looking for.
+    char firstDataRow;			// First row of hourly data.
 
 };
 
@@ -29,7 +31,8 @@ struct file{
 struct MeasuredData{
 
     struct file fileContent;		// Content of the CSV file.
-    char ***inputDataMatrix;		// Matrix filled with the data from the CSV file.
+    char ***rawDataMatrix;		// matrix filled with all data from the csv file.
+    char ***formatedDataMatrix;		// Matrix filled with the formated data from the CSV file.
     
 };
 
@@ -217,27 +220,29 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
     */
     
     jmp_buf env;
-    int idx, jdx, kdx;
+    int idx, jdx;
     
     // ########################################### functions ###########################################          
     void read_data(struct DWDWeatherReportPoi *Dataset){
     
         int row_length = (int)USHRT_MAX;	// USHRT_MAX = 65535
+        int cols_cnt = 0; 
         char row[row_length];
-        char *parameter;
-        
+        char *token_tmp;			// temporary token for temporary usecases.
+        char string_tmp[row_length];
+
         
         // get number of rows of the CSV file.
         while (fgets(row, row_length, Dataset->groundData.fileContent.filePointer)){
             Dataset->groundData.fileContent.numRows++;
         }
-        
         // Number of rows shouldnt be 0 or less;
         if ((Dataset->groundData.fileContent.numRows) == 0){
             longjmp(env, 1);
         }
         
-        // Allocate memory:
+        
+        // Allocate memory for the raw unformated rows strings of the CSV file:
         Dataset->groundData.fileContent.rawRows = (char**) malloc(Dataset->groundData.fileContent.numRows * sizeof(char*));
         if (Dataset->groundData.fileContent.rawRows == NULL){
             longjmp(env, 2);
@@ -265,25 +270,52 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
             else{
                 longjmp(env, 2);
             }
-        }        
+        } 
         
-        // Allocate the final data matrix to import the data we want:
-        Dataset->groundData.inputDataMatrix = (char***) malloc(Dataset->groundData.fileContent.numRows * sizeof(char**));
-        if (Dataset->groundData.inputDataMatrix == NULL){
+
+        
+        // get number of columns of the CSV file.
+        for (idx=0; idx<Dataset->groundData.fileContent.numRows; idx++){
+        
+            // work with a copy of that string
+            strcpy(string_tmp, Dataset->groundData.fileContent.rawRows[idx]);
+            
+            // check over all rows the number of columns:
+            token_tmp = strtok(string_tmp, ";");
+            
+            cols_cnt = 0;
+            while (token_tmp != NULL){
+            
+                cols_cnt ++;
+                token_tmp = strtok(NULL, ";");
+            }
+            // if there are differences take always the max number:
+            Dataset->groundData.fileContent.numCols = (cols_cnt > Dataset->groundData.fileContent.numCols) ? cols_cnt : Dataset->groundData.fileContent.numCols;
+        }
+        if (Dataset->groundData.fileContent.numCols <= 0){
+            longjmp(env, 4);
+        }
+
+        
+        
+        
+        // Allocate the data matrix to import the raw data from the file.
+        Dataset->groundData.rawDataMatrix = (char***) malloc(Dataset->groundData.fileContent.numRows * sizeof(char**));
+        if (Dataset->groundData.rawDataMatrix == NULL){
             longjmp(env, 2);
         }
         else{
             for (idx=0; idx<Dataset->groundData.fileContent.numRows; idx++){
             
-                Dataset->groundData.inputDataMatrix[idx] = (char**) malloc(Dataset->number_parameters * sizeof(char*));
-                if (Dataset->groundData.inputDataMatrix[idx] == NULL){
+                Dataset->groundData.rawDataMatrix[idx] = (char**) malloc(Dataset->groundData.fileContent.numCols * sizeof(char*));
+                if (Dataset->groundData.rawDataMatrix[idx] == NULL){
                     longjmp(env, 2);
                 }
                 else{
-                    for (jdx=0; jdx<Dataset->number_parameters; jdx++){
+                    for (jdx=0; jdx<Dataset->groundData.fileContent.numCols; jdx++){
                     
-                        Dataset->groundData.inputDataMatrix[idx][jdx] = (char*) malloc(8 * sizeof(char));
-                        if (Dataset->groundData.inputDataMatrix[idx][jdx] == NULL){
+                        Dataset->groundData.rawDataMatrix[idx][jdx] = (char*) malloc(100 * sizeof(char));
+                        if (Dataset->groundData.rawDataMatrix[idx][jdx] == NULL){
                             longjmp(env, 2);
                         }
                     }
@@ -291,34 +323,61 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
             }
         }
         
-        // fill all these cells with the wanted data out of the CSV file.
-        // Get and copy the station id to the dataset matrix:
-        strcpy(Dataset->stationId,strtok(Dataset->groundData.fileContent.rawRows[1], ";"));
-        if ((int)strlen(Dataset->stationId) <= 0){
-            longjmp(env, 3);
+        
+        // Allocate the final data matrix for the formated data:
+        Dataset->groundData.formatedDataMatrix = (char***) malloc(Dataset->groundData.fileContent.numRows * sizeof(char**));
+        if (Dataset->groundData.formatedDataMatrix == NULL){
+            longjmp(env, 2);
         }
-        
-        // search for your wanted parameters and copy the corresponding values to the dataset matrix.
-        parameter = strtok(Dataset->groundData.fileContent.rawRows[2], ";");
-        
-        while (parameter != NULL){
-        
-            for (idx=0; idx<Dataset->number_parameters; idx++){
+        else{
+            for (idx=0; idx<Dataset->groundData.fileContent.numRows; idx++){
             
-                if (strcmp(Dataset->wanted_parameters[idx][0], parameter) == 0){
-                    
-                    strcpy(Dataset->groundData.inputDataMatrix[0][idx],Dataset->wanted_parameters[idx][1]);
-                    
-                    
-                    break;
+                Dataset->groundData.formatedDataMatrix[idx] = (char**) malloc(Dataset->number_parameters * sizeof(char*));
+                if (Dataset->groundData.formatedDataMatrix[idx] == NULL){
+                    longjmp(env, 2);
                 }
                 else{
-                    // parameter not wanted:
-                    continue;
+                    for (jdx=0; jdx<Dataset->number_parameters; jdx++){
+                    
+                        Dataset->groundData.formatedDataMatrix[idx][jdx] = (char*) malloc(10 * sizeof(char));
+                        if (Dataset->groundData.formatedDataMatrix[idx][jdx] == NULL){
+                            longjmp(env, 2);
+                        }
+                    }
                 }
             }
-            parameter = strtok(NULL, ";");
         }
+
+        
+        // copy all data from file to the allocated raw data matrix:
+        for (idx=0; idx<Dataset->groundData.fileContent.numRows; idx++){
+        
+            jdx=0;
+        
+            // work with just a copy of that string:
+            strcpy(string_tmp, Dataset->groundData.fileContent.rawRows[idx]);
+        
+            token_tmp = strtok(string_tmp, ";");
+            
+            while (token_tmp != NULL){
+            
+                strcpy(Dataset->groundData.rawDataMatrix[idx][jdx], token_tmp);
+                jdx ++;
+                token_tmp = strtok(NULL, ";");
+            }
+        }
+        
+        for (idx=0; idx<Dataset->groundData.fileContent.numRows; idx++){
+        
+            /*for (jdx=0; jdx<Dataset->groundData.fileContent.numCols; jdx++){
+            
+                printf("%10s",Dataset->groundData.rawDataMatrix[idx][jdx]);
+            
+            }*/
+            printf("%10s",Dataset->groundData.rawDataMatrix[idx][2]);
+            printf("\n");
+        }
+        
         
         
         
@@ -333,7 +392,8 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
         case 1: fprintf(stderr,"ERROR: (%s -> %s)\n>>> The number of rows of the CSV file shouldnt be 0.\n\n", __FILE__, __func__); return EXIT_FAILURE;
         case 2: fprintf(stderr, "ERROR: (%s -> %s)\n>>> %s\n", __FILE__, __func__, strerror(errno)); return EXIT_FAILURE;
         case 3: fprintf(stderr, "ERROR: (%s -> %s)\n>>> Import of station id from the CSV file failed!\n\
-                                                        The length of the imported stations id is equal to 0.\n", __FILE__, __func__); return EXIT_FAILURE;              
+                                                        The length of the imported stations id is equal to 0.\n", __FILE__, __func__); return EXIT_FAILURE; 
+        case 4: fprintf(stderr,"ERROR: (%s -> %s)\n>>> The number of columns of the CSV file shouldnt be 0.\n\n", __FILE__, __func__); return EXIT_FAILURE;
         default: fprintf(stderr,"Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;
     }
 }
@@ -419,7 +479,7 @@ int show_dataMatrix(struct DWDWeatherReportPoi *Dataset){
             // columns:
             for (jdx=0; jdx<Dataset->number_parameters; jdx++){
             
-                printf("%8s",Dataset->groundData.inputDataMatrix[idx][jdx]);
+                printf("%8s",Dataset->groundData.formatedDataMatrix[idx][jdx]);
             }
             printf("\n");
         }

@@ -40,6 +40,9 @@ int main(int argc, char *argv[]){
         .groundData = {
             .fileContent = {
                 .numRows = 0,
+                .numCols = 0,
+                .headerParameterRow = 2,
+                .firstDataRow = 3,
             },
         },
     };
@@ -71,10 +74,10 @@ int main(int argc, char *argv[]){
         return 1;
     }
     
-    err = show_dataMatrix(&Dataset);
-    if (err == EXIT_FAILURE){
-        return 1;
-    }
+    //err = show_dataMatrix(&Dataset);
+    //if (err == EXIT_FAILURE){
+    //    return 1;
+    //}
     
     
     // free rows of raw file content
@@ -86,14 +89,28 @@ int main(int argc, char *argv[]){
     // free formated input dataset
     for (idx=0; idx<Dataset.groundData.fileContent.numRows; idx++){
     
-        for (jdx=0; jdx<Dataset.number_parameters; jdx++){
+        for (jdx=0; jdx<Dataset.groundData.fileContent.numCols; jdx++){
         
-            free(Dataset.groundData.inputDataMatrix[idx][jdx]);
+            free(Dataset.groundData.rawDataMatrix[idx][jdx]);
             
         }
-        free(Dataset.groundData.inputDataMatrix[idx]);
+        free(Dataset.groundData.rawDataMatrix[idx]);
     }
-    free(Dataset.groundData.inputDataMatrix);
+    free(Dataset.groundData.rawDataMatrix);    
+    
+    
+    
+    // free formated input dataset
+    for (idx=0; idx<Dataset.groundData.fileContent.numRows; idx++){
+    
+        for (jdx=0; jdx<Dataset.number_parameters; jdx++){
+        
+            free(Dataset.groundData.formatedDataMatrix[idx][jdx]);
+            
+        }
+        free(Dataset.groundData.formatedDataMatrix[idx]);
+    }
+    free(Dataset.groundData.formatedDataMatrix);
     
 
     return 0;
