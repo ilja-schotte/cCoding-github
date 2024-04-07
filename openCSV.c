@@ -41,8 +41,10 @@ int main(int argc, char *argv[]){
             .fileContent = {
                 .numRows = 0,
                 .numCols = 0,
-                .headerParameterRow = 2,
-                .firstDataRow = 3,
+                .separator = ';',
+                .delimiter = '\n',
+                .rowOfParameters = 2,
+                .firstRowOfData = 3,
             },
         },
     };
@@ -74,17 +76,17 @@ int main(int argc, char *argv[]){
         return 1;
     }
     
-    //err = show_dataMatrix(&Dataset);
-    //if (err == EXIT_FAILURE){
-    //    return 1;
-    //}
+    err = show_dataMatrix(&Dataset);
+    if (err == EXIT_FAILURE){
+        return 1;
+    }
     
     
     // free rows of raw file content
-    for (idx=0; idx<Dataset.groundData.fileContent.numRows; idx++){
+    /*for (idx=0; idx<Dataset.groundData.fileContent.numRows; idx++){
         free(Dataset.groundData.fileContent.rawRows[idx]);
     }
-    free(Dataset.groundData.fileContent.rawRows);
+    free(Dataset.groundData.fileContent.rawRows);*/
     
     // free formated input dataset
     for (idx=0; idx<Dataset.groundData.fileContent.numRows; idx++){
