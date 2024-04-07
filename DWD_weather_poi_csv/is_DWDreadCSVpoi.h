@@ -64,7 +64,7 @@ int open_CSVfile(struct DWDWeatherReportPoi *Dataset);					// Opens the file und
 int close_CSVfile(struct DWDWeatherReportPoi *Dataset);					// Closes the file by closing the corresponding filepointer to this file.
 int allocate_cmatrix(char **ptr, int rows, int cols);					// allocates a rows x cols matrix of datatype char.
 int show_dataMatrix(struct DWDWeatherReportPoi *Dataset);				// shows the dataMatrix with the observation data imported from the csv file.
-
+int free_memory(struct DWDWeatherReportPoi *Dataset);					// frees the allocated memory.
 
 // ###############################################################################################################################################################################
 // ###############################################################################################################################################################################
