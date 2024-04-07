@@ -23,12 +23,13 @@ struct file{
     FILE *filePointer;			// file pointer to read the file
     unsigned short numRows;		// Number of rows of the CSV file.
     unsigned short numCols;		// Number of columns of the CSV file.
-    char **rawRows;			// Matrix filled with the raw content of each rows of the CSV file.
     char separator;			// car that indicates the end of a column
     char delimiter;			// char that indicates the end of a line
+    char missingValue[5];		// value that defines a missing value in the dataset.
+    char missingValueSub[5];		// default value to substitude missing values.
     int rowOfParameters;		// line of the parameter description we are looking for.
     int firstRowOfData;			// first row of the csv file that contains observation data. Everything above belongs to the header area.
-
+    
 };
 
 
@@ -230,25 +231,22 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
     void read_data(struct DWDWeatherReportPoi *Dataset){
     
 
-        int cols_cnt = 0;
-        int rows_cnt = 0;
-        char row[BUFSIZE];
-        char *token_tmp;			// temporary token for temporary usecases.
-        char string_tmp[BUFSIZE];
-        char delimiter;
+        int cols_cnt = 0;			// counter variable for columns
+        int rows_cnt = 0;			// counter variable for rows
+        char str_buf[BUFSIZE];			// buffer to read in strings 
         char delim;
         
-        
+        // #################################################################################        
         // get number of rows of the CSV file.
-        while (fgets(row, BUFSIZE, Dataset->groundData.fileContent.filePointer)){
+        while (fgets(str_buf, BUFSIZE, Dataset->groundData.fileContent.filePointer)){
         
             cols_cnt = 0;
             
-            for (idx=0; idx<(int)strlen(row); idx++){
+            for (idx=0; idx<(int)strlen(str_buf); idx++){
                 
                 // check for seperator 
-                if ((row[idx] == Dataset->groundData.fileContent.separator) || 
-                    (row[idx] == Dataset->groundData.fileContent.delimiter)){
+                if ((str_buf[idx] == Dataset->groundData.fileContent.separator) || 
+                    (str_buf[idx] == Dataset->groundData.fileContent.delimiter)){
                     
                     cols_cnt ++;
                 }
@@ -261,22 +259,19 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
         if ((Dataset->groundData.fileContent.numRows) == 0){
             longjmp(env, 1);
         }
-        
+        // Number of columns shouldnt be 0 or less;
         if ((Dataset->groundData.fileContent.numCols) == 0){
             longjmp(env, 4);
-        }            
-
-
-
+        }
+                    
+        // #################################################################################
         //Set file pointer to the start of the csv file if it is not already.
         if (ftell(Dataset->groundData.fileContent.filePointer) != 0){
             fseek(Dataset->groundData.fileContent.filePointer,0,SEEK_SET);
         }
-
         
-
-        
-        // Allocate the data matrix to import the raw data from the file.
+        // #################################################################################
+        // Allocate the data matrix to import the complete raw data from the file.
         Dataset->groundData.rawDataMatrix = (char***) malloc(Dataset->groundData.fileContent.numRows * sizeof(char**));
         if (Dataset->groundData.rawDataMatrix == NULL){
             longjmp(env, 2);
@@ -300,7 +295,7 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
             }
         }
         
-        
+        // #################################################################################        
         // Allocate the final data matrix for the formated data:
         Dataset->groundData.formatedDataMatrix = (char***) malloc(Dataset->groundData.fileContent.numRows * sizeof(char**));
         if (Dataset->groundData.formatedDataMatrix == NULL){
@@ -325,24 +320,44 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
             }
         }
 
-
+        // #################################################################################
+        // Read in the entire dataset and copy to raw data matrix
         cols_cnt = 0;
         rows_cnt = 0;
         
-        while(fscanf(Dataset->groundData.fileContent.filePointer,"%[^;\n]%c", string_tmp, &delim) != EOF){
+        while(fscanf(Dataset->groundData.fileContent.filePointer,"%[^;\n]%c", str_buf, &delim) != EOF){
         
+            // read the corresponding station id:
+            if ((rows_cnt == 1) && (cols_cnt == 0)){
+                if ((int)strlen(str_buf) != 0){
+                    strcpy(Dataset->stationId, str_buf);
+                }
+                else{
+                    longjmp(env,3);
+                }
+            }
+        
+            // reset the counter for columns if you reach the end of the line.
             if (delim == Dataset->groundData.fileContent.delimiter){
                 rows_cnt ++;
                 cols_cnt = 0;
                 continue;
             }
             
-            strcpy(Dataset->groundData.rawDataMatrix[rows_cnt][cols_cnt], string_tmp);
+            // otherwise copy any further data value
+            if (strcmp(str_buf, Dataset->groundData.fileContent.missingValue) != 0){
+                strcpy(Dataset->groundData.rawDataMatrix[rows_cnt][cols_cnt], str_buf);
+            }
+            else{
+                strcpy(Dataset->groundData.rawDataMatrix[rows_cnt][cols_cnt], Dataset->groundData.fileContent.missingValueSub);
+            }
 
             cols_cnt ++;
             
         }
-             
+        
+        // ################################################################################# 
+        // Finally get all necessary data from raw data matrix and copy and format the data to the format data matrix    
         cols_cnt = 0;        
         for (idx=0; idx<Dataset->groundData.fileContent.numCols; idx++){
         
@@ -369,22 +384,6 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
                 }
             }
         }
-        
-        //printf("rows %d\n", rows_cnt);
-        //printf("cols %d\n", cols_cnt);
-        
-        /*for (idx=2; idx<Dataset->groundData.fileContent.numRows; idx++){
-            for (jdx=0; jdx<Dataset->groundData.fileContent.numCols; jdx++){
-            
-                printf("%9s",Dataset->groundData.rawDataMatrix[idx][jdx]);
-            }
-            printf("\n");        
-        }
-        
-        
-        
-        printf("\n");*/
-        
         
         
         fprintf(stdout, ">> File read: %s%s\n", Dataset->path, Dataset->filename);
@@ -477,6 +476,8 @@ int show_dataMatrix(struct DWDWeatherReportPoi *Dataset){
     
     void show(struct DWDWeatherReportPoi *Dataset){
     
+        printf("id: %s\n", Dataset->stationId);
+    
         // rows
         for (idx=0; idx<Dataset->groundData.fileContent.numRows; idx++){
         
@@ -503,7 +504,68 @@ int show_dataMatrix(struct DWDWeatherReportPoi *Dataset){
 // #####################################################################################################
 
 
+int free_memory(struct DWDWeatherReportPoi *Dataset){
 
+    /*
+        DESCRIPTION:
+        frees all the allocated memory.
+    
+        INPUT:
+        struct DWDWeatherReportPoi *Dataset	...	pointer to the corresponding dataset.
+    
+        OUTPUT:
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)
+        
+        CHECKS:
+        - 
+    */
+
+    int idx, jdx; 
+    jmp_buf env;
+    
+    // ########################################### functions ########################################### 
+    
+    void free_mem(struct DWDWeatherReportPoi *Dataset){
+
+        // free the raw unformated data matrix:
+        for (idx=0; idx<Dataset->groundData.fileContent.numRows; idx++){
+    
+            for (jdx=0; jdx<Dataset->groundData.fileContent.numCols; jdx++){
+        
+                free(Dataset->groundData.rawDataMatrix[idx][jdx]);
+            }
+            free(Dataset->groundData.rawDataMatrix[idx]);
+        }
+        free(Dataset->groundData.rawDataMatrix);    
+    
+    
+    
+        // free formated input dataset
+        for (idx=0; idx<Dataset->groundData.fileContent.numRows; idx++){
+    
+            for (jdx=0; jdx<Dataset->number_parameters; jdx++){
+        
+                free(Dataset->groundData.formatedDataMatrix[idx][jdx]);
+            }
+            free(Dataset->groundData.formatedDataMatrix[idx]);
+        }
+        free(Dataset->groundData.formatedDataMatrix);
+    }
+    // ################################################################################################# 
+       
+    switch(setjmp(env)){
+        case 0: free_mem(Dataset); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: (%s -> %s)\n>>> %s\n", __FILE__, __func__, strerror(errno)); return EXIT_FAILURE;
+        default: fprintf(stderr,"Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;          
+
+    }
+}
+
+
+// #####################################################################################################
+// #####################################################################################################
 
 
 

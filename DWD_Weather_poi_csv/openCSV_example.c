@@ -45,6 +45,8 @@ int main(int argc, char *argv[]){
                 .delimiter = '\n',
                 .rowOfParameters = 2,
                 .firstRowOfData = 3,
+                .missingValue = "---",
+                .missingValueSub = "None",
             },
         },
     };
@@ -81,39 +83,10 @@ int main(int argc, char *argv[]){
         return 1;
     }
     
-    
-    // free rows of raw file content
-    /*for (idx=0; idx<Dataset.groundData.fileContent.numRows; idx++){
-        free(Dataset.groundData.fileContent.rawRows[idx]);
+    err = free_memory(&Dataset);
+    if (err == EXIT_FAILURE){
+        return 1;
     }
-    free(Dataset.groundData.fileContent.rawRows);*/
-    
-    // free formated input dataset
-    for (idx=0; idx<Dataset.groundData.fileContent.numRows; idx++){
-    
-        for (jdx=0; jdx<Dataset.groundData.fileContent.numCols; jdx++){
-        
-            free(Dataset.groundData.rawDataMatrix[idx][jdx]);
-            
-        }
-        free(Dataset.groundData.rawDataMatrix[idx]);
-    }
-    free(Dataset.groundData.rawDataMatrix);    
-    
-    
-    
-    // free formated input dataset
-    for (idx=0; idx<Dataset.groundData.fileContent.numRows; idx++){
-    
-        for (jdx=0; jdx<Dataset.number_parameters; jdx++){
-        
-            free(Dataset.groundData.formatedDataMatrix[idx][jdx]);
-            
-        }
-        free(Dataset.groundData.formatedDataMatrix[idx]);
-    }
-    free(Dataset.groundData.formatedDataMatrix);
-    
 
     return 0;
 
