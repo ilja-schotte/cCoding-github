@@ -281,6 +281,13 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
             
                 Dataset->groundData.rawDataMatrix[idx] = (char**) malloc(Dataset->groundData.fileContent.numCols * sizeof(char*));
                 if (Dataset->groundData.rawDataMatrix[idx] == NULL){
+                
+                    // clean up
+                    for (jdx=0; jdx<idx; jdx++){
+                        free(Dataset->groundData.rawDataMatrix[jdx]);
+                    }
+                    free(Dataset->groundData.rawDataMatrix);
+                
                     longjmp(env, 2);
                 }
                 else{
@@ -288,6 +295,7 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
                     
                         Dataset->groundData.rawDataMatrix[idx][jdx] = (char*) malloc(100 * sizeof(char));
                         if (Dataset->groundData.rawDataMatrix[idx][jdx] == NULL){
+                        
                             longjmp(env, 2);
                         }
                     }
@@ -306,6 +314,13 @@ int read_CSVdata(struct DWDWeatherReportPoi *Dataset){
             
                 Dataset->groundData.formatedDataMatrix[idx] = (char**) malloc(Dataset->number_parameters * sizeof(char*));
                 if (Dataset->groundData.formatedDataMatrix[idx] == NULL){
+                
+                    // clean up
+                    for (jdx=0; jdx<idx; jdx++){
+                        free(Dataset->groundData.formatedDataMatrix[jdx]);
+                    }
+                    free(Dataset->groundData.formatedDataMatrix);
+                
                     longjmp(env, 2);
                 }
                 else{
