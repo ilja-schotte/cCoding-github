@@ -50,13 +50,13 @@ int main(){
     input_data[6][1] = 5;
     input_data[7][1] = 2;
     input_data[8][1] = 3;
-    input_data[9][1] = 5;       
-
+    input_data[9][1] = 5;   
+        
     ausgabe(input_data, length);
-
-
-    polynomial_regression(input_data, length, order);
     
+    polynomial_regression(input_data, length, order);
+
+
     
 
     return 0;
@@ -72,7 +72,7 @@ void ausgabe(double **input_data, int length){
     
     for (idx=0; idx<length; idx++){
     
-        printf("%d:%7.3f %7.3f\n", idx, input_data[idx][0], input_data[idx][1] );
+        printf("%d:%7.3f %7.3f\n", idx, input_data[idx][0], input_data[idx][1]);
 
     }
 }
