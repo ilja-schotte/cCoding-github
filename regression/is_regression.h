@@ -18,7 +18,10 @@ struct dataset{
     unsigned int order;
     unsigned int input_data_length;
     double **input_data;
-    double **powers_of_input_data;
+    double **input_data_powers;			// powers of the input values
+    double **avg_sd_input_data_powers;		// average and standard deviation of the powers of the input values
+    double **cov_data_powers;			// covariance matrix of the powers of the input values
+    double **cor_data_powers;			// intra-correlation matrix of predictors
     
 };
 
@@ -31,7 +34,7 @@ struct dataset{
 // int *polynomial_regression(double **input_data, const int length, const int n);
 
 int read_input_data(double **input_data, const int length, const int order, struct dataset *data);	// reads the input data / performs some checks / imports to internal dataset.
-int allocate_fmatrix(double **matrix, unsigned int rows, unsigned int columns);					// allocates memory for a rows x colmuns matrix of type double.
+int allocate_fmatrix(double ***matrix, unsigned int rows, unsigned int columns);					// allocates memory for a rows x colmuns matrix of type double.
 
 void free_fmatrix_memory(double **matrix, unsigned int rows, unsigned int columns);			// frees the allocated memory of a matrix of datatype double.
 
@@ -64,15 +67,39 @@ double *polynomial_regression(double **input_data, const int length, const int o
     }
     
     
+    
+    
+    // ################################ MEMORY ALLOCATION #####################################    
     // Allocate a matrix to calculate the powers of the input data.
-    err = allocate_fmatrix(internal_data.powers_of_input_data, 
+    err = allocate_fmatrix(&(internal_data.input_data_powers), 
                            internal_data.input_data_length, 
                            (internal_data.order+1));
     if (err == EXIT_FAILURE){
         exit(EXIT_FAILURE);
     }
     
-    printf("%p\n", internal_data.powers_of_input_data);
+    // Allocate a matrix to calculate the average and standard deviation of the powers of the input data.    
+    err = allocate_fmatrix(&(internal_data.avg_sd_input_data_powers), 
+                           2, 
+                           (internal_data.order+2));
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }    
+
+     // Allocate a matrix to calculate the covariances of the powers of the input data.    
+    err = allocate_fmatrix(&(internal_data.cov_data_powers), 
+                           internal_data.order, 
+                           internal_data.order);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }
+     // Allocate a matrix for the correlation of predictors    
+    err = allocate_fmatrix(&(internal_data.cor_data_powers), 
+                           internal_data.order, 
+                           internal_data.order);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }    
     
     
     
@@ -82,9 +109,21 @@ double *polynomial_regression(double **input_data, const int length, const int o
                         internal_data.input_data_length, 
                         2);
     // free the internal matrix of power values:
-    //free_fmatrix_memory(internal_data.powers_of_input_data,
-    //                    internal_data.input_data_length, 
-    //                    (internal_data.order+1));
+    free_fmatrix_memory(internal_data.input_data_powers,
+                        internal_data.input_data_length, 
+                        (internal_data.order+1));
+    // free the internal matrix of the averages and standard deviations of the powers of input data:
+    free_fmatrix_memory(internal_data.avg_sd_input_data_powers,
+                        2, 
+                        (internal_data.order+2));
+    // free the internal matrix of covariances of the powers of input data:
+    free_fmatrix_memory(internal_data.cov_data_powers,
+                        internal_data.order, 
+                        internal_data.order);
+    // free the internal matrix of the correlation of predictors:
+    free_fmatrix_memory(internal_data.cor_data_powers,
+                        internal_data.order, 
+                        internal_data.order);                
 }
 
 
@@ -168,7 +207,7 @@ int read_input_data(double **input_data, const int length, const int order, stru
 // ###############################################################################################################################################################################
 
 
-int calculate_powers_of_input_data(struct dataset *internal_data){
+int calculate_input_data_powers(struct dataset *internal_data){
 
     /*
         DESCRIPTION:
@@ -199,14 +238,14 @@ int calculate_powers_of_input_data(struct dataset *internal_data){
 // ###############################################################################################################################################################################
 
 
-int allocate_fmatrix(double **matrix, unsigned int rows, unsigned int columns){
+int allocate_fmatrix(double ***matrix, unsigned int rows, unsigned int columns){
 
     /*
         DESCRIPTION:
         Allocates memory for a rows x columns matrix of datatype double.
     
         INPUT:
-        double **matrix		...	pointer to the allocated memory of type double.
+        double ***matrix	...	adress of the pointer of the matrix
         unsigned int rows	...	number of rows
         unsigned int cols	...	number of columns
              
@@ -220,36 +259,44 @@ int allocate_fmatrix(double **matrix, unsigned int rows, unsigned int columns){
     jmp_buf env;
 
     // ########################################### functions ########################################### 
-    void allocate_matrix(double **matrix, unsigned int rows, unsigned int columns){
+    void allocate_matrix(double ***matrix, unsigned int rows, unsigned int columns){
     
-        printf("rows: %d, cols: %d\n",rows, columns);
+        double **ptr;
     
         // check if rows and columns are greater then 0
         if ((rows <= 0) || (columns <= 0)){
             longjmp(env, 1);
         }
     
-        matrix = (double**) calloc(rows, sizeof(double*));
-        if (matrix == NULL){
+        ptr = (double**) calloc(rows, sizeof(double*));
+        if (ptr == NULL){
             longjmp(env, 2);
         }
         else{
             for (idx=0; idx<rows; idx++){
-                matrix[idx] = (double*) calloc(columns, sizeof(double));
-                if (matrix[idx] == NULL){
+                ptr[idx] = (double*) calloc(columns, sizeof(double));
+                if (ptr[idx] == NULL){
+                
+                    // clean memory until failure happend:
+                    for (jdx=0; jdx<idx; jdx++){
+                        free(ptr[jdx]);
+                    }
+                    free(ptr);
+                    
                     longjmp(env, 2);                    
                 }
             }
+            // assign the adress of ptr to the adress of matrix
+            *matrix = ptr;
         }
-        printf("allocated: %p\n", matrix);
     }
     // #################################################################################################
     
     switch(setjmp(env)){
         case 0: allocate_matrix(matrix, rows, columns); return EXIT_SUCCESS;
-        case 1: fprintf(stderr,"ERROR:( %s -> %s)\n>>> The number of rows and columns has to be greater then 0.\n", __FILE__, __func__); EXIT_FAILURE;
-        case 2: fprintf(stderr,"ERROR:( %s -> %s)\n>>> %s.\n", __FILE__, __func__, strerror(errno)); EXIT_FAILURE;        
-        default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); EXIT_FAILURE;
+        case 1: fprintf(stderr,"ERROR: (%s -> %s)\n>>> The number of rows and columns has to be greater then 0.\n", __FILE__, __func__); EXIT_FAILURE;
+        case 2: fprintf(stderr,"ERROR: (%s -> %s)\n>>> %s.\n", __FILE__, __func__, strerror(errno)); EXIT_FAILURE;        
+        default: fprintf(stderr,"Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); EXIT_FAILURE;
     }
           
 }
@@ -280,7 +327,7 @@ void free_fmatrix_memory(double **matrix, unsigned int rows, unsigned int column
     // ########################################### functions ###########################################     
     void free_memory(double **matrix, unsigned int rows, unsigned int columns){
     
-        printf("rows: %d, cols: %d\n",rows, columns);
+        printf("rows: %d, cols: %d\n", rows, columns);
     
         // check if rows and columns are greater then 0
         if ((rows <= 0) || (columns <= 0)){
