@@ -22,7 +22,15 @@ struct dataset{
     double **avg_sd_input_data_powers;		// average and standard deviation of the powers of the input values
     double **cov_data_powers;			// covariance matrix of the powers of the input values
     double **cor_data_powers;			// intra-correlation matrix of predictors
-    
+    double **cor_data_powers_temp;		// temorary used intra-correlation matrix of predictors
+    double **cor_data_powers_inverted;		// inverted intra-correlation matrix.
+    double *cor_data_powers_criteria;		// vector of intra-criteria-correlation
+    double *cov_data_powers_criteria;		// vector of intra-criteria-covariances
+    double *beta_weights;			// vector of beta-weight
+    double *b_weights;				// vector of b-weights and coefficient of determination
+    double *predicted_values;			// predicted values of the coefficients
+    double **lower_matrix;			// lower matrix for the calculation of the determinat
+    double **upper_matrix;			// upper matrix for the calculation of the determinat    
 };
 
 
@@ -34,9 +42,11 @@ struct dataset{
 // int *polynomial_regression(double **input_data, const int length, const int n);
 
 int read_input_data(double **input_data, const int length, const int order, struct dataset *data);	// reads the input data / performs some checks / imports to internal dataset.
-int allocate_fmatrix(double ***matrix, unsigned int rows, unsigned int columns);					// allocates memory for a rows x colmuns matrix of type double.
+int allocate_fmatrix(double ***matrix, unsigned int rows, unsigned int columns);			// allocates memory for a rows x colmuns matrix of type double.
+int allocate_fvector(double **vector, unsigned int length);						// allocates memory for a vector of length "length" and of type double.
 
 void free_fmatrix_memory(double **matrix, unsigned int rows, unsigned int columns);			// frees the allocated memory of a matrix of datatype double.
+void free_fvector_memory(double *vector, unsigned int length);						// frees the allocated memory of a vector of datatype double.
 
 double *polynomial_regression(double **input_data, const int length, const int n);			// function to perform a polynimocal regression.
 
@@ -68,8 +78,9 @@ double *polynomial_regression(double **input_data, const int length, const int o
     
     
     
-    
-    // ################################ MEMORY ALLOCATION #####################################    
+    // ########################################################################################
+    // ################################ MEMORY ALLOCATION #####################################
+       
     // Allocate a matrix to calculate the powers of the input data.
     err = allocate_fmatrix(&(internal_data.input_data_powers), 
                            internal_data.input_data_length, 
@@ -99,11 +110,78 @@ double *polynomial_regression(double **input_data, const int length, const int o
                            internal_data.order);
     if (err == EXIT_FAILURE){
         exit(EXIT_FAILURE);
+    }
+    
+    // Allocate a matrix for temporary calculations of the correlation of predictors    
+    err = allocate_fmatrix(&(internal_data.cor_data_powers_temp), 
+                           internal_data.order, 
+                           internal_data.order);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }
+    
+    // Allocate a matrix for the inverted correlation matrix of the predictors    
+    err = allocate_fmatrix(&(internal_data.cor_data_powers_inverted), 
+                           internal_data.order, 
+                           internal_data.order);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }
+    
+    // Allocate memory for the lower matrix to calculate the determinat
+    err = allocate_fmatrix(&(internal_data.lower_matrix), 
+                           internal_data.order, 
+                           internal_data.order);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
     }    
     
+    // Allocate memory for the lower matrix to calculate the determinat
+    err = allocate_fmatrix(&(internal_data.upper_matrix), 
+                           internal_data.order, 
+                           internal_data.order);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }
+          
+    // Allocate a vector for the intra-criteria-correlation
+    err = allocate_fvector(&(internal_data.cor_data_powers_criteria), 
+                           internal_data.order);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }  
     
+    // Allocate a vector for the intra-criteria-covariances
+    err = allocate_fvector(&(internal_data.cov_data_powers_criteria), 
+                           internal_data.order);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }
     
+    // Allocate a vector for the beta-weights
+    err = allocate_fvector(&(internal_data.beta_weights), 
+                           internal_data.order);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }    
+    
+    // Allocate a vector for the b-weights and coefficient of determination
+    err = allocate_fvector(&(internal_data.b_weights), 
+                           internal_data.order+2);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }
+    
+    // Allocate a vector for the predicted values of the coefficients
+    err = allocate_fvector(&(internal_data.predicted_values), 
+                           internal_data.input_data_length);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }
+    
+    // ########################################################################################
     // #################################### CLEAN UP ##########################################
+    
     // free the internal dataset of the input data:
     free_fmatrix_memory(internal_data.input_data, 
                         internal_data.input_data_length, 
@@ -123,7 +201,39 @@ double *polynomial_regression(double **input_data, const int length, const int o
     // free the internal matrix of the correlation of predictors:
     free_fmatrix_memory(internal_data.cor_data_powers,
                         internal_data.order, 
-                        internal_data.order);                
+                        internal_data.order);
+    // free the internal matrix for temporary calculations on the matrix of intra-correlations of predictors:
+    free_fmatrix_memory(internal_data.cor_data_powers_temp,
+                        internal_data.order, 
+                        internal_data.order);
+    // free the internal inverted matrix of the correlation of predictors:
+    free_fmatrix_memory(internal_data.cor_data_powers_inverted,
+                        internal_data.order, 
+                        internal_data.order); 
+    // free the internal lower matrix for calculation of determinant:
+    free_fmatrix_memory(internal_data.lower_matrix,
+                        internal_data.order, 
+                        internal_data.order);                        
+    // free the internal upper matrix for calculation of determinant:
+    free_fmatrix_memory(internal_data.upper_matrix,
+                        internal_data.order, 
+                        internal_data.order);
+     // free the internal vector of the intra-criteria-correlation:
+    free_fvector_memory(internal_data.cor_data_powers_criteria,
+                        internal_data.order); 
+     // free the internal vector of the intra-criteria-covariances:
+    free_fvector_memory(internal_data.cov_data_powers_criteria,
+                        internal_data.order);                        
+    // free the internal vector of the beta-weights:
+    free_fvector_memory(internal_data.beta_weights,
+                        internal_data.order);
+    // free the internal vector of the b-weights and coefficient of determination:
+    free_fvector_memory(internal_data.b_weights,
+                        internal_data.order+2);
+    // free the internal vector of predicted values of the coefficients:
+    free_fvector_memory(internal_data.predicted_values,
+                        internal_data.input_data_length);                                              
+                                          
 }
 
 
@@ -245,7 +355,7 @@ int allocate_fmatrix(double ***matrix, unsigned int rows, unsigned int columns){
         Allocates memory for a rows x columns matrix of datatype double.
     
         INPUT:
-        double ***matrix	...	adress of the pointer of the matrix
+        double ***matrix	...	address of the pointer of the matrix
         unsigned int rows	...	number of rows
         unsigned int cols	...	number of columns
              
@@ -286,7 +396,7 @@ int allocate_fmatrix(double ***matrix, unsigned int rows, unsigned int columns){
                     longjmp(env, 2);                    
                 }
             }
-            // assign the adress of ptr to the adress of matrix
+            // assign the address of ptr to the address of the matrix
             *matrix = ptr;
         }
     }
@@ -306,6 +416,61 @@ int allocate_fmatrix(double ***matrix, unsigned int rows, unsigned int columns){
 // ###############################################################################################################################################################################
 
 
+int allocate_fvector(double **vector, unsigned int length){
+
+    /*
+        DESCRIPTION:
+        Allocates memory for a vector with the lenght of "length" and of datatype double.
+    
+        INPUT:
+        double **vector		...	address of the pointer of the vector
+        unsigned int length	...	length of the vector
+             
+        OUTPUT:
+        Outputs an error code:
+        success:		...	1 (EXIT_SUCCESS)
+        failure:		...	0 (EXIT_FAILURE)       
+    */
+    
+    int idx, jdx;
+    jmp_buf env;
+
+    // ########################################### functions ########################################### 
+    void allocate_vector(double **vector, unsigned int length){
+    
+        double *ptr;
+    
+        // check if length is greater then 0
+        if (length <= 0){
+            longjmp(env, 1);
+        }
+        else{
+        
+            ptr = (double*) calloc(length, sizeof(double));
+            if (ptr == NULL){
+                longjmp(env, 2);
+            }
+            else{
+                // assign the address of ptr to the address of the vector
+                *vector = ptr;
+            }
+        }
+    }
+    // #################################################################################################
+    
+    switch(setjmp(env)){
+        case 0: allocate_vector(vector, length); return EXIT_SUCCESS;
+        case 1: fprintf(stderr,"ERROR: (%s -> %s)\n>>> The length of the vector has to be greater then 0.\n", __FILE__, __func__); EXIT_FAILURE;
+        case 2: fprintf(stderr,"ERROR: (%s -> %s)\n>>> %s.\n", __FILE__, __func__, strerror(errno)); EXIT_FAILURE;        
+        default: fprintf(stderr,"Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); EXIT_FAILURE;
+    }
+}
+
+
+// ###############################################################################################################################################################################
+// ###############################################################################################################################################################################
+
+
 void free_fmatrix_memory(double **matrix, unsigned int rows, unsigned int columns){
 
     /*
@@ -313,7 +478,7 @@ void free_fmatrix_memory(double **matrix, unsigned int rows, unsigned int column
         frees the allocated memory of a rows x cols matrix of datatype double.
     
         INPUT:
-        double matrix		...	allocated memory to free
+        double **matrix		...	Pointer to the allocated memory to free
         unsigned int rows	...	number of rows
         unsigned int cols	...	number of columns
              
@@ -347,14 +512,55 @@ void free_fmatrix_memory(double **matrix, unsigned int rows, unsigned int column
         case 0: free_memory(matrix, rows, columns); break;
         case 1: fprintf(stderr,"ERROR:( %s -> %s)\n>>> The number of rows and columns has to be greater then 0.\n", __FILE__, __func__); break;         
         default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); break;
-    }         
-        
-        
+    }     
 }
 
 
+// ###############################################################################################################################################################################
+// ###############################################################################################################################################################################
 
 
+void free_fvector_memory(double *vector, unsigned int length){
+
+    /*
+        DESCRIPTION:
+        frees the allocated memory of a vector with length "length" and of datatype double.
+    
+        INPUT:
+        double *vector		...	Pointer to the allocated memory to free
+        unsigned int length	...	length of the vector
+             
+        OUTPUT:
+        --
+    */
+    
+    int idx, jdx;
+    jmp_buf env;
+    
+    // ########################################### functions ###########################################     
+    void free_memory(double *vector, unsigned int length){
+    
+        printf("length: %d\n", length);
+    
+        // check if rows and columns are greater then 0
+        if (length <= 0){
+            longjmp(env, 1);
+        }
+        else{
+            // free the memory:        
+            free(vector);
+        }
+        
+    }
+    // #################################################################################################
+    
+    switch(setjmp(env)){
+        case 0: free_memory(vector, length); break;
+        case 1: fprintf(stderr,"ERROR:( %s -> %s)\n>>> The length of the vector has to be greater then 0.\n", __FILE__, __func__); break;         
+        default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); break;
+    } 
+
+}
 
 
 
