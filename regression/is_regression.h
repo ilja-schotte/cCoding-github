@@ -9,6 +9,7 @@
     #include <string.h>
 #endif
 
+#define EPS 1E-14
 
 
 // ######################################################################### struct declaration ##################################################################################
@@ -30,7 +31,8 @@ struct dataset{
     double *b_weights;				// vector of b-weights and coefficient of determination
     double *predicted_values;			// predicted values of the coefficients
     double **lower_matrix;			// lower matrix for the calculation of the determinat
-    double **upper_matrix;			// upper matrix for the calculation of the determinat    
+    double **upper_matrix;			// upper matrix for the calculation of the determinat
+    double det_cor;				// determinant of intra-correlation matrix  
 };
 
 
@@ -44,6 +46,10 @@ struct dataset{
 int read_input_data(double **input_data, const int length, const int order, struct dataset *data);	// reads the input data / performs some checks / imports to internal dataset.
 int allocate_fmatrix(double ***matrix, unsigned int rows, unsigned int columns);			// allocates memory for a rows x colmuns matrix of type double.
 int allocate_fvector(double **vector, unsigned int length);						// allocates memory for a vector of length "length" and of type double.
+int calc_input_data_powers(struct dataset *internal_data);						// calculate the powers of the input values according to the selected order of regression.
+int calc_avg_sd_input_data_powers(struct dataset *internal_data);					// calculate the averages and standard deviation of the powers of the input values. 
+int calc_cov_cor_input_data_powers(struct dataset *internal_data);					// calculates the covariance matrix of input data and intra-correlation matrix of predictors.
+int calc_determinat(struct dataset *internal_data);							// Calculates the determinant of a square matrix
 
 void free_fmatrix_memory(double **matrix, unsigned int rows, unsigned int columns);			// frees the allocated memory of a matrix of datatype double.
 void free_fvector_memory(double *vector, unsigned int length);						// frees the allocated memory of a vector of datatype double.
@@ -65,6 +71,7 @@ double *polynomial_regression(double **input_data, const int length, const int o
     struct dataset internal_data = {
         .order = 0,
         .input_data_length = 0,
+        .det_cor = 0,
     };
     
     
@@ -178,6 +185,34 @@ double *polynomial_regression(double **input_data, const int length, const int o
     if (err == EXIT_FAILURE){
         exit(EXIT_FAILURE);
     }
+    // ########################################################################################
+    // ################################## CALCULATIONS ########################################    
+    
+    // calculate the powers of the input data according to the selected order of polynomic regression
+    err = calc_input_data_powers(&internal_data);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }
+    
+    // calculate the averages and standard deviation of the powers of the input values.
+    err = calc_avg_sd_input_data_powers(&internal_data);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    } 
+       
+    // calculates the covariance matrix of input data and intra-correlation matrix of predictors.
+    err = calc_cov_cor_input_data_powers(&internal_data);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }
+    
+    // calculate the determinant of the intra-correlation matrix of predictors to show if an inverse matrix exists.
+    err = calc_determinat(&internal_data);
+    if (err == EXIT_FAILURE){
+        exit(EXIT_FAILURE);
+    }     
+    
+
     
     // ########################################################################################
     // #################################### CLEAN UP ##########################################
@@ -305,8 +340,8 @@ int read_input_data(double **input_data, const int length, const int order, stru
     
     switch(setjmp(env)){
         case 0: read_data(input_data, length, order, internal_data); return EXIT_SUCCESS;
-        case 1: fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The order of the polynomial function cannot be higher then the number of datapoints.\n", __FILE__, __func__); return EXIT_FAILURE;
-        case 2: fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The length of the input dataset has to be higher then 0.\n", __FILE__, __func__); return EXIT_FAILURE;        
+        case 1: fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The order of the polynomic function cannot be higher than the number of datapoints.\n", __FILE__, __func__); return EXIT_FAILURE;
+        case 2: fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The length of the input dataset has to be higher than 0.\n", __FILE__, __func__); return EXIT_FAILURE;        
         case 3: fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The dataset consists nan - values.\n", __FILE__, __func__); return EXIT_FAILURE;              
         default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;
     }    
@@ -317,19 +352,15 @@ int read_input_data(double **input_data, const int length, const int order, stru
 // ###############################################################################################################################################################################
 
 
-int calculate_input_data_powers(struct dataset *internal_data){
+int calc_input_data_powers(struct dataset *internal_data){
 
     /*
         DESCRIPTION:
-        Reads the input dataset and performs several checks to it.
+        calculates the powers of the input datapoints regarding to the selected order 
+        of the polynomic regression.
     
         INPUT:
-        double **input_data	...	Pointer of type double to the input dataset in shape of:
-        				x-values: input_data[0 bis n][0]
-        				y-values: input_data[0 bis n][1]
-                                		
-        const int length        ...	Number of points.
-        const int n		...	order of regression.
+        struct dataset *internal_data	...	pointer to the internal dataset 
              
         OUTPUT:
         Outputs an error code:
@@ -337,15 +368,286 @@ int calculate_input_data_powers(struct dataset *internal_data){
         failure:	...	0 (EXIT_FAILURE)
         
         CHECKS:
-        - the order of the polynomial function must be lower or equal to the number of input points. 
-        - 
+        - order of polynomic regression must be smaller/equal to the number of input values.
+        - number of input value smust be greater than 0.
     */
+    
+    int idx, jdx;
+    jmp_buf env;
+    
+    // ########################################### functions ###########################################  
+    void calc_powers(struct dataset *internal_data){    
+    
+        // check if the order of the polynomic regression is smaller/equal to the number of datapoints
+        if (internal_data->order > internal_data->input_data_length){
+            longjmp(env,1);
+        }
+        
+        // check for length of dataset
+        if (internal_data->input_data_length <= 0){
+            longjmp(env,2);
+        }
+        
+        // perform calculations to get the powers of the datapoints regarding to the selected order of polynomic regression.
+        // x1 | x1² | x1³ | y1
+        // x2 | x2² | x2³ | y2
+
+        for (idx=0; idx<internal_data->input_data_length; idx++){
+            for (jdx=0; jdx<(internal_data->order)+1; jdx++){
+            
+                if (jdx < internal_data->order){
+                    // calculate powers:
+                    internal_data->input_data_powers[idx][jdx] = pow(internal_data->input_data[idx][0], jdx+1);
+                }
+                else{
+                    // adopt y-values to the last column:
+                    internal_data->input_data_powers[idx][jdx] = internal_data->input_data[idx][1];
+                }
+            }        
+        } 
+    }
+    // #################################################################################################
+       
+    switch(setjmp(env)){
+        case 0: calc_powers(internal_data); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: ( %s -> %s)\n>>> The order of the polynomic function cannot be higher than the number of datapoints.\n", __FILE__, __func__); return EXIT_FAILURE;
+        case 2: fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The length of the input dataset has to be higher than 0.\n", __FILE__, __func__); return EXIT_FAILURE;                         
+        default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;
+    }
+}
+
+
+// ###############################################################################################################################################################################
+// ###############################################################################################################################################################################
+
+
+int calc_avg_sd_input_data_powers(struct dataset *internal_data){
+
+    /*
+        DESCRIPTION:
+        calculates the averages and standard deviations of the powers of the input values.
+    
+        INPUT:
+        struct dataset *internal_data	...	pointer to the internal dataset 
+             
+        OUTPUT:
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)
+        
+        CHECKS:
+        --
+    */
+
+    int idx, jdx, kdx;
+    jmp_buf env;
+    
+    // ########################################### functions ###########################################  
+    void calc_avg_sd(struct dataset *internal_data){
+    
+        // calculate the averages of all power vectors.
+        for (idx=0; idx<1; idx++){
+        
+            for (jdx=0; jdx<(internal_data->order)+1; jdx++){
+            
+                for (kdx=0; kdx<internal_data->input_data_length; kdx++){
+                
+                    internal_data->avg_sd_input_data_powers[idx][jdx] += internal_data->input_data_powers[kdx][jdx];
+                }
+                internal_data->avg_sd_input_data_powers[idx][jdx] /= (double)internal_data->input_data_length;
+            }
+        }
+        
+        // calculate the standard deviations of all power vectors.
+        for (idx=1; idx<2; idx++){
+        
+            for (jdx=0; jdx<(internal_data->order)+1; jdx++){
+                
+                for (kdx=0; kdx<internal_data->input_data_length; kdx++){
+                
+                    internal_data->avg_sd_input_data_powers[idx][jdx] += pow((internal_data->input_data_powers[kdx][jdx] - internal_data->avg_sd_input_data_powers[0][jdx]),2);
+                }
+                internal_data->avg_sd_input_data_powers[idx][jdx] = sqrt(internal_data->avg_sd_input_data_powers[idx][jdx] /= (double)internal_data->input_data_length);
+            }   
+        }  
+    }
+    // #################################################################################################
+       
+    switch(setjmp(env)){
+        case 0: calc_avg_sd(internal_data); return EXIT_SUCCESS;                         
+        default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;
+    }    
+}
+
+
+// ###############################################################################################################################################################################
+// ###############################################################################################################################################################################
+
+
+int calc_cov_cor_input_data_powers(struct dataset *internal_data){
+
+    /*
+        DESCRIPTION:
+        calculates the covariance matrix of input points and intra-correlation matrix of predictors.
+    
+        INPUT:
+        struct dataset *internal_data	...	pointer to the internal dataset 
+             
+        OUTPUT:
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)
+        
+        CHECKS:
+        --
+    */
+    
+    int idx, jdx, kdx;
+    jmp_buf env;    
+    
+    // ########################################### functions ###########################################  
+    void calc_cov_cor(struct dataset *internal_data){
+    
+        // calculate the covariance matrix:
+        for (idx=0; idx<internal_data->order; idx++){
+    
+            for (jdx=0; jdx<internal_data->order; jdx++){
+        
+                for (kdx=0; kdx<internal_data->input_data_length; kdx++){
+                
+                    internal_data->cov_data_powers[idx][jdx] += ((internal_data->input_data_powers[kdx][idx] - internal_data->avg_sd_input_data_powers[0][idx]) * 
+                                                                 (internal_data->input_data_powers[kdx][jdx] - internal_data->avg_sd_input_data_powers[0][jdx]));
+                }
+                internal_data->cov_data_powers[idx][jdx] /= (double)internal_data->input_data_length;
+            }
+        }
+        
+        // calculate the intra-correlation matrix:
+        for (idx=0; idx<internal_data->order; idx++){
+    
+            for (jdx=0; jdx<internal_data->order; jdx++){
+        
+                internal_data->cor_data_powers[idx][jdx] = internal_data->cov_data_powers[idx][jdx] / (internal_data->avg_sd_input_data_powers[1][idx] * internal_data->avg_sd_input_data_powers[1][jdx]);
+            }
+        }                             
+    }
+    // #################################################################################################
+       
+    switch(setjmp(env)){
+        case 0: calc_cov_cor(internal_data); return EXIT_SUCCESS;                         
+        default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n>>>%s\n\n", __FILE__, __func__, strerror(errno)); return EXIT_FAILURE;
+    } 
 
 }
 
 
 // ###############################################################################################################################################################################
 // ###############################################################################################################################################################################
+
+
+int calc_determinat(struct dataset *internal_data){
+
+    /*
+        DESCRIPTION:
+        calculates the determinant of a square matrix
+    
+        INPUT:
+        struct dataset *internal_data	...	pointer to the internal dataset 
+             
+        OUTPUT:
+        Outputs an error code:
+        success:	...	1 (EXIT_SUCCESS)
+        failure:	...	0 (EXIT_FAILURE)
+        
+        CHECKS:
+        --
+    */
+    
+    int idx, jdx, kdx;
+    double sum=0;
+    double DetL = 1.0;				// Determinant of lower-diagonal-matrix
+    double DetU = 1.0;				// Determinant of upper-diagonal-matrix
+    double Det;					// Determinant
+    
+    jmp_buf env;    
+    
+    // ########################################### functions ###########################################  
+    void calc_det(struct dataset *internal_data){
+    
+        for (idx=0; idx<internal_data->order; idx++){
+    
+            internal_data->upper_matrix[idx][idx] = 1;
+        }
+
+        for (jdx=0; jdx<internal_data->order; jdx++){
+	    for (idx=jdx; idx<internal_data->order; idx++){
+	
+	        sum=0;
+	    
+	        for (kdx=0; kdx<jdx; kdx++){
+	    
+		    sum = sum + internal_data->lower_matrix[idx][kdx] * internal_data->upper_matrix[kdx][jdx];
+	        }
+	    
+	        internal_data->lower_matrix[idx][jdx] = internal_data->cor_data_powers[idx][jdx] - sum;
+	    }
+
+	    for (idx=jdx; idx<internal_data->order; idx++){
+	
+	        sum = 0;
+	    
+	        for(kdx=0; kdx<jdx; kdx++){
+	    
+	            sum = sum + internal_data->lower_matrix[jdx][kdx] * internal_data->upper_matrix[kdx][idx];
+	        }
+	        
+	        if (internal_data->lower_matrix[jdx][jdx] == 0){
+	    
+	            longjmp(env, 1);
+	        }
+	        internal_data->upper_matrix[jdx][idx] = (internal_data->cor_data_powers[jdx][idx] - sum) / internal_data->lower_matrix[jdx][jdx];
+	    }
+        }
+    
+        // multiply the diagonal of the columns
+        for (idx=0; idx<internal_data->order; idx++){
+    
+            DetL = DetL * internal_data->lower_matrix[idx][idx];
+            DetU = DetU * internal_data->upper_matrix[idx][idx];
+
+        }    
+
+        // calculate the determinant by Det(L) * Det(U)
+        Det = DetL * DetU;
+
+        // check for nan:
+        if (isnan(Det)){
+            longjmp(env, 2);
+        }
+        
+        // check for determinant equal to 0:
+        if ((EPS-Det) > 0){
+            longjmp(env, 3);
+        }
+        else{
+            internal_data->det_cor = Det;
+        }
+    }
+    // #################################################################################################
+       
+    switch(setjmp(env)){
+        case 0: calc_det(internal_data); return EXIT_SUCCESS; 
+        case 1: fprintf(stderr, "ERROR: ( %s -> %s)\n>>> Determinant of lower Matrix close to 0. It's not possible to divide by 0!\n", __FILE__, __func__); return EXIT_FAILURE;
+        case 2: fprintf(stderr, "ERROR: ( %s -> %s)\n>>> An Error occured! The determinant is nan!\n", __FILE__, __func__); return EXIT_FAILURE;
+        case 3: fprintf(stderr, "ERROR: ( %s -> %s)\n>>> The calculated determinant is close to 0! There is no inversed matrix!\n", __FILE__, __func__); return EXIT_FAILURE;                  
+        default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n>>>%s\n\n", __FILE__, __func__, strerror(errno)); return EXIT_FAILURE;
+    }
+}
+
+
+// ###############################################################################################################################################################################
+// ###############################################################################################################################################################################
+
 
 
 int allocate_fmatrix(double ***matrix, unsigned int rows, unsigned int columns){
@@ -373,7 +675,7 @@ int allocate_fmatrix(double ***matrix, unsigned int rows, unsigned int columns){
     
         double **ptr;
     
-        // check if rows and columns are greater then 0
+        // check if rows and columns are greater than 0
         if ((rows <= 0) || (columns <= 0)){
             longjmp(env, 1);
         }
@@ -404,7 +706,7 @@ int allocate_fmatrix(double ***matrix, unsigned int rows, unsigned int columns){
     
     switch(setjmp(env)){
         case 0: allocate_matrix(matrix, rows, columns); return EXIT_SUCCESS;
-        case 1: fprintf(stderr,"ERROR: (%s -> %s)\n>>> The number of rows and columns has to be greater then 0.\n", __FILE__, __func__); EXIT_FAILURE;
+        case 1: fprintf(stderr,"ERROR: (%s -> %s)\n>>> The number of rows and columns has to be greater than 0.\n", __FILE__, __func__); EXIT_FAILURE;
         case 2: fprintf(stderr,"ERROR: (%s -> %s)\n>>> %s.\n", __FILE__, __func__, strerror(errno)); EXIT_FAILURE;        
         default: fprintf(stderr,"Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); EXIT_FAILURE;
     }
@@ -440,7 +742,7 @@ int allocate_fvector(double **vector, unsigned int length){
     
         double *ptr;
     
-        // check if length is greater then 0
+        // check if length is greater than 0
         if (length <= 0){
             longjmp(env, 1);
         }
@@ -460,7 +762,7 @@ int allocate_fvector(double **vector, unsigned int length){
     
     switch(setjmp(env)){
         case 0: allocate_vector(vector, length); return EXIT_SUCCESS;
-        case 1: fprintf(stderr,"ERROR: (%s -> %s)\n>>> The length of the vector has to be greater then 0.\n", __FILE__, __func__); EXIT_FAILURE;
+        case 1: fprintf(stderr,"ERROR: (%s -> %s)\n>>> The length of the vector has to be greater than 0.\n", __FILE__, __func__); EXIT_FAILURE;
         case 2: fprintf(stderr,"ERROR: (%s -> %s)\n>>> %s.\n", __FILE__, __func__, strerror(errno)); EXIT_FAILURE;        
         default: fprintf(stderr,"Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); EXIT_FAILURE;
     }
@@ -492,9 +794,9 @@ void free_fmatrix_memory(double **matrix, unsigned int rows, unsigned int column
     // ########################################### functions ###########################################     
     void free_memory(double **matrix, unsigned int rows, unsigned int columns){
     
-        printf("rows: %d, cols: %d\n", rows, columns);
+        //printf("rows: %d, cols: %d\n", rows, columns);
     
-        // check if rows and columns are greater then 0
+        // check if rows and columns are greater than 0
         if ((rows <= 0) || (columns <= 0)){
             longjmp(env, 1);
         }
@@ -510,7 +812,7 @@ void free_fmatrix_memory(double **matrix, unsigned int rows, unsigned int column
     
     switch(setjmp(env)){
         case 0: free_memory(matrix, rows, columns); break;
-        case 1: fprintf(stderr,"ERROR:( %s -> %s)\n>>> The number of rows and columns has to be greater then 0.\n", __FILE__, __func__); break;         
+        case 1: fprintf(stderr,"ERROR:( %s -> %s)\n>>> The number of rows and columns has to be greater than 0.\n", __FILE__, __func__); break;         
         default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); break;
     }     
 }
@@ -540,9 +842,9 @@ void free_fvector_memory(double *vector, unsigned int length){
     // ########################################### functions ###########################################     
     void free_memory(double *vector, unsigned int length){
     
-        printf("length: %d\n", length);
+        //printf("length: %d\n", length);
     
-        // check if rows and columns are greater then 0
+        // check if rows and columns are greater than 0
         if (length <= 0){
             longjmp(env, 1);
         }
@@ -556,7 +858,7 @@ void free_fvector_memory(double *vector, unsigned int length){
     
     switch(setjmp(env)){
         case 0: free_memory(vector, length); break;
-        case 1: fprintf(stderr,"ERROR:( %s -> %s)\n>>> The length of the vector has to be greater then 0.\n", __FILE__, __func__); break;         
+        case 1: fprintf(stderr,"ERROR:( %s -> %s)\n>>> The length of the vector has to be greater than 0.\n", __FILE__, __func__); break;         
         default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); break;
     } 
 

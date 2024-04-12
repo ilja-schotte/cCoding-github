@@ -2,6 +2,7 @@
 #ifdef __unix__
     #include <stdio.h>
     #include "is_regression.h"
+    #include <time.h>
 #endif
 
 
@@ -21,6 +22,7 @@ int main(){
     int order = 4;
     double **input_data;
     double result;
+    srand((unsigned)time(NULL));
     
     
     input_data = (double**) calloc(length, sizeof(double*));
@@ -34,11 +36,19 @@ int main(){
             if (input_data[idx] == NULL){
                 printf("Speicherfehler.\n");
             }
-            else{
-                input_data[idx][0] = (double)idx;
-            }
         }
     }
+    
+    input_data[0][0] = 1;
+    input_data[1][0] = 3; 
+    input_data[2][0] = 4; 
+    input_data[3][0] = 8; 
+    input_data[4][0] = 11;
+    input_data[5][0] = 12;
+    input_data[6][0] = 15;
+    input_data[7][0] = 20;
+    input_data[8][0] = 21;
+    input_data[9][0] = 24;    
     
     
     input_data[0][1] = 2;
@@ -51,6 +61,7 @@ int main(){
     input_data[7][1] = 2;
     input_data[8][1] = 3;
     input_data[9][1] = 5;   
+    
         
     ausgabe(input_data, length);
     
@@ -69,12 +80,13 @@ int main(){
 void ausgabe(double **input_data, int length){
 
     int idx, jdx;
-    
+    printf("Input data:\n");
     for (idx=0; idx<length; idx++){
     
         printf("%d:%7.3f %7.3f\n", idx, input_data[idx][0], input_data[idx][1]);
 
     }
+    printf("=================\n");
 }
 
 

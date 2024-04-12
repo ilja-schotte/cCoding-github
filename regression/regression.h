@@ -309,7 +309,7 @@ double *polynomial_regression(double **input_data, const int length, const int n
     // 4. Berechnen der Determinanten der Korrelationsmatrix der Prädiktoren um zu prüfen, ob es eine inverse
     //    Matrix gibt.
     
-    for (idx=0; idx<n; idx++){
+        for (idx=0; idx<n; idx++){
     
             UppMatrix[idx][idx] = 1;
         }
