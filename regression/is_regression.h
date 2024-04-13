@@ -21,7 +21,7 @@ struct dataset{
     double **input_data;
     double **input_data_powers;			// powers of the input values
     double **avg_sd_input_data_powers;		// average and standard deviation of the powers of the input values
-    double **cov_data_powers;			// covariance matrix of the powers of the input values
+    double **cov_data_powers;		// covariance matrix of the powers of the input values
     double **cor_data_powers;			// intra-correlation matrix of predictors
     double **cor_data_powers_temp;		// temorary used intra-correlation matrix of predictors
     double **cor_data_powers_inverted;		// inverted intra-correlation matrix.
@@ -49,7 +49,10 @@ int allocate_fvector(double **vector, unsigned int length);						// allocates me
 int calc_input_data_powers(struct dataset *internal_data);						// calculate the powers of the input values according to the selected order of regression.
 int calc_avg_sd_input_data_powers(struct dataset *internal_data);					// calculate the averages and standard deviation of the powers of the input values. 
 int calc_cov_cor_input_data_powers(struct dataset *internal_data);					// calculates the covariance matrix of input data and intra-correlation matrix of predictors.
-int calc_determinat(struct dataset *internal_data);							// Calculates the determinant of a square matrix
+int calc_determinat(struct dataset *internal_data);							// calculates the determinant of a square matrix
+int calc_inverse_matrix(struct dataset *internal_data);							// determines the inverse of a square matrix
+int calc_cor_cov_crieria(struct dataset *internal_data);						// calculates the vectors of intra-criteria-correlation and covariances
+
 
 void free_fmatrix_memory(double **matrix, unsigned int rows, unsigned int columns);			// frees the allocated memory of a matrix of datatype double.
 void free_fvector_memory(double *vector, unsigned int length);						// frees the allocated memory of a vector of datatype double.
@@ -80,7 +83,7 @@ double *polynomial_regression(double **input_data, const int length, const int o
                           length, order, 
                           &internal_data);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }
     
     
@@ -93,7 +96,7 @@ double *polynomial_regression(double **input_data, const int length, const int o
                            internal_data.input_data_length, 
                            (internal_data.order+1));
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }
     
     // Allocate a matrix to calculate the average and standard deviation of the powers of the input data.    
@@ -101,7 +104,7 @@ double *polynomial_regression(double **input_data, const int length, const int o
                            2, 
                            (internal_data.order+2));
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }    
 
      // Allocate a matrix to calculate the covariances of the powers of the input data.    
@@ -109,14 +112,14 @@ double *polynomial_regression(double **input_data, const int length, const int o
                            internal_data.order, 
                            internal_data.order);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }
      // Allocate a matrix for the correlation of predictors    
     err = allocate_fmatrix(&(internal_data.cor_data_powers), 
                            internal_data.order, 
                            internal_data.order);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }
     
     // Allocate a matrix for temporary calculations of the correlation of predictors    
@@ -124,7 +127,7 @@ double *polynomial_regression(double **input_data, const int length, const int o
                            internal_data.order, 
                            internal_data.order);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }
     
     // Allocate a matrix for the inverted correlation matrix of the predictors    
@@ -132,7 +135,7 @@ double *polynomial_regression(double **input_data, const int length, const int o
                            internal_data.order, 
                            internal_data.order);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }
     
     // Allocate memory for the lower matrix to calculate the determinat
@@ -140,7 +143,7 @@ double *polynomial_regression(double **input_data, const int length, const int o
                            internal_data.order, 
                            internal_data.order);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }    
     
     // Allocate memory for the lower matrix to calculate the determinat
@@ -148,42 +151,42 @@ double *polynomial_regression(double **input_data, const int length, const int o
                            internal_data.order, 
                            internal_data.order);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }
           
     // Allocate a vector for the intra-criteria-correlation
     err = allocate_fvector(&(internal_data.cor_data_powers_criteria), 
                            internal_data.order);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }  
     
     // Allocate a vector for the intra-criteria-covariances
     err = allocate_fvector(&(internal_data.cov_data_powers_criteria), 
                            internal_data.order);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }
     
     // Allocate a vector for the beta-weights
     err = allocate_fvector(&(internal_data.beta_weights), 
                            internal_data.order);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }    
     
     // Allocate a vector for the b-weights and coefficient of determination
     err = allocate_fvector(&(internal_data.b_weights), 
                            internal_data.order+2);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }
     
     // Allocate a vector for the predicted values of the coefficients
     err = allocate_fvector(&(internal_data.predicted_values), 
                            internal_data.input_data_length);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }
     // ########################################################################################
     // ################################## CALCULATIONS ########################################    
@@ -191,26 +194,41 @@ double *polynomial_regression(double **input_data, const int length, const int o
     // calculate the powers of the input data according to the selected order of polynomic regression
     err = calc_input_data_powers(&internal_data);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }
     
     // calculate the averages and standard deviation of the powers of the input values.
     err = calc_avg_sd_input_data_powers(&internal_data);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     } 
        
     // calculates the covariance matrix of input data and intra-correlation matrix of predictors.
     err = calc_cov_cor_input_data_powers(&internal_data);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }
     
     // calculate the determinant of the intra-correlation matrix of predictors to show if an inverse matrix exists.
     err = calc_determinat(&internal_data);
     if (err == EXIT_FAILURE){
-        exit(EXIT_FAILURE);
+        exit(err);
     }     
+    else{
+        // check for existence of inverse matrix 
+        if (EPS-internal_data.det_cor > 0){
+            fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The determinant of intra-correlation matrix is equal to 0.\n>>> There is no inverse matrix!\n", __FILE__, __func__);
+            exit(err);
+        }
+        else{
+            err = calc_inverse_matrix(&internal_data); 
+            if (err == EXIT_FAILURE){
+                exit(err);
+            } 
+        }
+    }
+    
+    
     
 
     
@@ -627,7 +645,7 @@ int calc_determinat(struct dataset *internal_data){
         
         // check for determinant equal to 0:
         if ((EPS-Det) > 0){
-            longjmp(env, 3);
+            internal_data->det_cor = 0.0;            
         }
         else{
             internal_data->det_cor = Det;
@@ -639,7 +657,6 @@ int calc_determinat(struct dataset *internal_data){
         case 0: calc_det(internal_data); return EXIT_SUCCESS; 
         case 1: fprintf(stderr, "ERROR: ( %s -> %s)\n>>> Determinant of lower Matrix close to 0. It's not possible to divide by 0!\n", __FILE__, __func__); return EXIT_FAILURE;
         case 2: fprintf(stderr, "ERROR: ( %s -> %s)\n>>> An Error occured! The determinant is nan!\n", __FILE__, __func__); return EXIT_FAILURE;
-        case 3: fprintf(stderr, "ERROR: ( %s -> %s)\n>>> The calculated determinant is close to 0! There is no inversed matrix!\n", __FILE__, __func__); return EXIT_FAILURE;                  
         default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n>>>%s\n\n", __FILE__, __func__, strerror(errno)); return EXIT_FAILURE;
     }
 }
@@ -648,6 +665,167 @@ int calc_determinat(struct dataset *internal_data){
 // ###############################################################################################################################################################################
 // ###############################################################################################################################################################################
 
+
+int calc_inverse_matrix(struct dataset *internal_data){
+
+    /*
+        DESCRIPTION:
+        Determines the inverse of a square matrix of type double.
+            
+        INPUT:
+        struct dataset *internal_data	...	pointer to the internal dataset
+             
+        OUTPUT:
+        Outputs an error code:
+        success:		...	1 (EXIT_SUCCESS)
+        failure:		...	0 (EXIT_FAILURE)       
+    */
+
+    int idx, jdx, kdx;
+    jmp_buf env;
+
+    // ########################################### functions ########################################### 
+    void calc_inverse(struct dataset *internal_data){
+
+        double temp;
+
+        // copy the content of the intra-correlation matrix to a temporary matrix
+        for(idx=0; idx<internal_data->order; idx++){
+            for(jdx=0; jdx<internal_data->order; jdx++){
+            					
+	        internal_data->cor_data_powers_temp[idx][jdx] = internal_data->cor_data_powers[idx][jdx];
+	    }
+        }
+        
+        // Set the diagonal values of the inverse matrix to 1 else 0
+        for(idx=0; idx<internal_data->order; idx++){
+        
+            internal_data->cor_data_powers_inverted[idx][idx] = 1;
+	}
+
+    
+        // determine the inversed intra-correlation-matrix:
+        for(idx=0 ;idx<internal_data->order; idx++){
+    														
+	    temp = internal_data->cor_data_powers_temp[idx][idx];
+											
+            for(jdx=0; jdx<internal_data->order; jdx++){
+        
+	        internal_data->cor_data_powers_temp[idx][jdx] /= temp;
+	        internal_data->cor_data_powers_inverted[idx][jdx] /= temp;
+	    }
+														
+	    for(kdx=0; kdx<internal_data->order; kdx++){
+	
+	        temp = internal_data->cor_data_powers_temp[kdx][idx];
+	    									
+	        for(jdx=0; jdx<internal_data->order; jdx++){
+	    												
+		    if(kdx == idx){
+		        break;
+		    }
+											
+		    internal_data->cor_data_powers_temp[kdx][jdx] -= internal_data->cor_data_powers_temp[idx][jdx] * temp;
+								
+		    internal_data->cor_data_powers_inverted[kdx][jdx] -= internal_data->cor_data_powers_inverted[idx][jdx] * temp;
+	        }
+	    }
+        }
+        
+        // check for nan- and inf-values within the inversed matrix
+        for (idx=0; idx<internal_data->order; idx++){
+            for (jdx=0; jdx<internal_data->order; jdx++){
+                if (isnan(internal_data->cor_data_powers_inverted[idx][jdx]) || 
+                    isinf(internal_data->cor_data_powers_inverted[idx][jdx])){
+                    
+                    longjmp(env, 1);    
+                }
+            }
+        }
+    }
+    // #################################################################################################
+    
+    switch(setjmp(env)){
+        case 0: calc_inverse(internal_data); return EXIT_SUCCESS;
+        case 1: fprintf(stderr,"ERROR: (%s -> %s)\n>>> The inversed matrix contains \"nan\" or \"inf\" values\n", __FILE__, __func__); return EXIT_FAILURE;        
+        default: fprintf(stderr,"Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;
+    }   
+}
+
+
+// ###############################################################################################################################################################################
+// ###############################################################################################################################################################################
+
+
+int calc_cor_cov_crieria(struct dataset *internal_data){
+
+    /*
+        DESCRIPTION:
+        Calculates the vectors of intra-criteria-correlations and covariances
+            
+        INPUT:
+        struct dataset *internal_data	...	pointer to the internal dataset
+             
+        OUTPUT:
+        Outputs an error code:
+        success:		...	1 (EXIT_SUCCESS)
+        failure:		...	0 (EXIT_FAILURE)       
+    */
+
+    int idx, jdx;
+    jmp_buf env;
+    
+    // ########################################### functions ########################################### 
+    void calc_criteria(struct dataset *internal_data){
+
+        // Calculate the vector of intra-criteria-covariance:
+        for (idx=0; idx<internal_data->order; idx++){
+            for (jdx=0; jdx<internal_data->input_data_length; jdx++){
+            
+                internal_data->cov_data_powers_criteria[idx] += ((internal_data->input_data_powers[jdx][idx] - 
+                                                                  internal_data->avg_sd_input_data_powers[0][idx]) * (internal_data->input_data_powers[jdx][internal_data->order] - 
+                                                                                                                      internal_data->avg_sd_input_data_powers[0][internal_data->order]));
+            }
+            internal_data->cov_data_powers_criteria[idx] /= (double)internal_data->input_data_length;
+        }
+        
+        // check for "nan"- and "inf"-values:
+        for (idx=0; idx<internal_data->order; idx++){
+            if (isnan(internal_data->cov_data_powers_criteria[idx]) || 
+                isinf(internal_data->cov_data_powers_criteria[idx])){
+                longjmp(env, 1);
+            }
+        }
+    
+        // Calculate the vector of intra-criteria-correlation:   
+        for (idx=0; idx<internal_data->order; idx++){
+        
+            internal_data->cor_data_powers_criteria[idx] = internal_data->cov_data_powers_criteria[idx] / ((internal_data->avg_sd_input_data_powers[1][idx]) * 
+                                                                                                           (internal_data->avg_sd_input_data_powers[1][internal_data->order]));
+        }
+        
+        // check for "nan"- and "inf"-values:
+        for (idx=0; idx<internal_data->order; idx++){
+            if (isnan(internal_data->cor_data_powers_criteria[idx]) || 
+                isinf(internal_data->cor_data_powers_criteria[idx])){
+                longjmp(env, 2);
+            }
+        }          
+    }
+    // #################################################################################################
+    
+    switch(setjmp(env)){
+        case 0: calc_criteria(internal_data); return EXIT_SUCCESS;
+        case 1: fprintf(stderr,"ERROR: (%s -> %s)\n>>> The vector of intra-criteria-covariance contains \"nan\" or \"inf\" values\n", __FILE__, __func__); return EXIT_FAILURE;
+        case 2: fprintf(stderr,"ERROR: (%s -> %s)\n>>> The vector of intra-criteria-correlation contains \"nan\" or \"inf\" values\n", __FILE__, __func__); return EXIT_FAILURE;          
+        default: fprintf(stderr,"Woops! (%s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;
+    }
+
+}
+
+
+// ###############################################################################################################################################################################
+// ###############################################################################################################################################################################
 
 
 int allocate_fmatrix(double ***matrix, unsigned int rows, unsigned int columns){
