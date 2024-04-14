@@ -2,7 +2,6 @@
 #ifdef __unix__
     #include <stdio.h>
     #include "is_regression.h"
-    #include <time.h>
 #endif
 
 
@@ -13,16 +12,15 @@ void ausgabe(double **input_data, int length);
 
 
 
-int main(){
+int main(void){
 
     int idx, jdx;
 
     int err = 0;
-    int length = 12;
+    int length = 13;
     int order = 3;
     double **input_data;
     double result;
-    srand((unsigned)time(NULL));
     
     
     input_data = (double**) calloc(length, sizeof(double*));
@@ -69,7 +67,7 @@ int main(){
         
     ausgabe(input_data, length);
     
-    polynomial_regression(input_data, length, order);
+    err = polynomial_regression(input_data, length, order, &result);
 
 
     
