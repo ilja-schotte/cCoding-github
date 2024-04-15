@@ -18,7 +18,7 @@ int main(void){
 
     int err = 0;
     int length = 13;
-    int order = 3;
+    int order = 0;
     double **input_data;
     double result;
     
@@ -90,25 +90,3 @@ void ausgabe(double **input_data, int length){
     }
     printf("=================\n");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

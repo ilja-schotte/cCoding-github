@@ -295,8 +295,7 @@ int polynomial_regression(double **input_data, const unsigned int length, const 
         else{
             // check for existence of inverse matrix 
             if (EPS-internal_data->det_cor > 0){
-                fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The determinant of intra-correlation matrix is equal to 0.\n\
-                                                    >>> There is no inverse matrix!\n", __FILE__, __func__);
+                fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The determinant of intra-correlation matrix is equal to 0.\n>>> There is no inverse matrix!\n", __FILE__, __func__);
                 longjmp(env, 3);
             }
             else{
@@ -398,11 +397,11 @@ int polynomial_regression(double **input_data, const unsigned int length, const 
                 perform_calculations(&internal_data); 
                 free_allocated_memory(&internal_data);
                 return EXIT_SUCCESS;
-        case 1: fprintf(stderr,"ERROR: (%s -> %s)\n>>> During reading the input data!\n>>> %s.\n", __FILE__, __func__, strerror(errno)); EXIT_FAILURE;
-        case 2: fprintf(stderr,"ERROR: (%s -> %s)\n>>> During memory allocation!\n>>>%s.\n", __FILE__, __func__, strerror(errno)); EXIT_FAILURE;
-        case 3: fprintf(stderr,"ERROR: (%s -> %s)\n>>> During performing calculations!\n>>>%s.\n", __FILE__, __func__, strerror(errno)); EXIT_FAILURE;
-        case 4: fprintf(stderr,"ERROR: (%s -> %s)\n>>> During memory deallocation!\n>>>%s.\n", __FILE__, __func__, strerror(errno)); EXIT_FAILURE;        
-        default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n>>>%s\n\n", __FILE__, __func__, strerror(errno)); return EXIT_FAILURE;
+        case 1: fprintf(stderr,"ERROR: (%s -> %s)\n>>> During reading the input data!\n", __FILE__, __func__); return EXIT_FAILURE;
+        case 2: fprintf(stderr,"ERROR: (%s -> %s)\n>>> During memory allocation!\n", __FILE__, __func__); return EXIT_FAILURE;
+        case 3: fprintf(stderr,"ERROR: (%s -> %s)\n>>> During performing calculations!\n", __FILE__, __func__); return EXIT_FAILURE;
+        case 4: fprintf(stderr,"ERROR: (%s -> %s)\n>>> During memory deallocation!\n", __FILE__, __func__); return EXIT_FAILURE;        
+        default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n", __FILE__, __func__); return EXIT_FAILURE;
     }
                               
 }
@@ -444,12 +443,17 @@ int read_input_data(double **input_data, const int length, const int order, stru
     void read_data(double **input_data, int length, int order, struct dataset *internal_data){
     
         // check for length and order of input_dataset
-        if (order > length){
-            longjmp(env, 1);
+        if (order <= 0){
+            longjmp(env, 4);
         }
         else{
-            // set order of polynomial function:
-            internal_data->order = order;
+            if (order > length){
+                longjmp(env, 1);
+            }
+            else{
+                // set order of polynomial function:
+                internal_data->order = order;            
+            }
         }
         
         if (length <= 0){
@@ -478,7 +482,8 @@ int read_input_data(double **input_data, const int length, const int order, stru
         case 0: read_data(input_data, length, order, internal_data); return EXIT_SUCCESS;
         case 1: fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The order of the polynomic function cannot be higher than the number of datapoints.\n", __FILE__, __func__); return EXIT_FAILURE;
         case 2: fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The length of the input dataset has to be higher than 0.\n", __FILE__, __func__); return EXIT_FAILURE;        
-        case 3: fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The dataset consists nan - values.\n", __FILE__, __func__); return EXIT_FAILURE;              
+        case 3: fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The dataset consists nan - values.\n", __FILE__, __func__); return EXIT_FAILURE;
+        case 4: fprintf(stderr,"ERROR: ( %s -> %s)\n>>> The order of the regression function must be greater then 0.\n", __FILE__, __func__); return EXIT_FAILURE;             
         default: fprintf(stderr,"Woops! ( %s -> %s)\n>>> Something unexpected has happend.\n\n", __FILE__, __func__); return EXIT_FAILURE;
     }    
 }
@@ -1026,20 +1031,21 @@ int calc_b_weights(struct dataset *internal_data){
     void calc_weights(struct dataset *internal_data){
     
         // Calculates the vector of b weights
-        for (idx=(internal_data->order)+1; idx>0; idx--){
+        for (idx=0; idx<internal_data->order+1; idx++){
         
-            if (idx == 1){
-            
+            if (idx == 0){
                 internal_data->b_weights[idx] = internal_data->avg_sd_input_data_powers[0][internal_data->order];
-                
-                for (jdx=0; jdx<(internal_data->order)+1; jdx++){
-                    internal_data->b_weights[idx] -= (internal_data->avg_sd_input_data_powers[0][jdx] * internal_data->b_weights[jdx+2]);
-                }
+            
+                continue;
             }
             else{
                 internal_data->b_weights[idx] = (internal_data->avg_sd_input_data_powers[1][internal_data->order] / 
-                                                 internal_data->avg_sd_input_data_powers[1][idx-2]) * internal_data->beta_weights[idx-2];
+                                                 internal_data->avg_sd_input_data_powers[1][idx-1]) * internal_data->beta_weights[idx-1];
             }
+    
+        }
+        for (idx=1; idx<internal_data->order+1; idx++){
+            internal_data->b_weights[0] = internal_data->b_weights[0] - (internal_data->avg_sd_input_data_powers[0][idx-1] * internal_data->b_weights[idx]);
         }
         
         // check for "nan"- and "inf"-values:
@@ -1093,11 +1099,11 @@ int get_coefficient_of_determination(struct dataset *internal_data){
         // =============================================================================================
         for (idx=0; idx<internal_data->input_data_length; idx++){
     
-            internal_data->predicted_values[idx] = internal_data->b_weights[1];
+            internal_data->predicted_values[idx] = internal_data->b_weights[0];
 
             for (jdx=0; jdx<internal_data->order; jdx++){
             
-                temp = internal_data->b_weights[jdx+2] * internal_data->input_data_powers[idx][jdx];
+                temp = internal_data->b_weights[jdx+1] * internal_data->input_data_powers[idx][jdx];
                 
                 // check for nan- or inf-values
                 if (isnan(temp) || isinf(temp)){
@@ -1140,7 +1146,7 @@ int get_coefficient_of_determination(struct dataset *internal_data){
         }
     
         // Calculation of the coefficient of determination by the division of the sum of the squared differences
-        internal_data->b_weights[0] = ((double)sumDiff_y / (double)sumDiff_y0);
+        internal_data->b_weights[internal_data->order+1] = ((double)sumDiff_y / (double)sumDiff_y0);
         if (isnan(internal_data->b_weights[0]) || isinf(internal_data->b_weights[0])){
             longjmp(env, 3);
         }
