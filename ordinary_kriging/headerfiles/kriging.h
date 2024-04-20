@@ -47,7 +47,7 @@ double calc_covariance(double distance, double sill, double nugget, double range
 double calc_RSME(double *values1, double *values2, int length);
 double get_fmax(double *values, int length);
 double get_fmin(double *values, int length);
-double **create_covariance_matrix(struct usr_map *zgr, double **matrix, int rows, int cols);
+int create_covariance_matrix(struct usr_map *Map);
 double **inverseOfMatrix(double **matrix, int rows, int cols);
 int create_distance_matrix(struct usr_map *Map);
 double **create_fmatrix(int rows, int cols);
@@ -59,9 +59,9 @@ void show_map_info(struct usr_map *zgr);
 void show_input_data(struct usr_map *zgr);
 void show_variogram_data(struct usr_map *zgr);
 void show_matrix(double **matrix, int rows, int cols);
-void check_matrix(double **matrix, int rows, int cols);
+int check_matrix(double **matrix, int rows, int cols, bool show_output);
 void outputMatrixCSV(double **matrix, char *filename, int rows, int cols);
-void find_model_adjust_index(struct usr_map *zgr, double *variogram_variances, int length);
+int find_model_adjust_index(struct usr_map *Map, double *variogram_variances, int length);
 
 void free_raster(struct usr_map *zgr);
 void free_vector(struct usr_map *zgr);
@@ -508,76 +508,96 @@ double **create_fmatrix(int rows, int cols){
 }
 
 
-
 // ##################################################################################################
-
+// ##################################################################################################
 
 
 double *create_fvector(int length){
 
     /*
-        Erstellt einen Vektor vom Datentyp "double" der Laenge "length".
+        DESCRIPTION:
+        Allocates memory for a vector of datatype double and length. 
         
-        Rückgabewert: 
-        Erfolg: Ein Zeiger des Datentyps "double" auf das Feld [0] des Vektors.
-        Fehler: NULL.       
+        INPUT:
+        int length	...	length of the vector you want to allocate.
+        
+        OUTPUT:
+        on success	...	pointer to this vector
+        on failure	...	NULL
+              
     */
 
+    jmp_buf env;
     int idx;
-    double *zgr;
+
     
+    // ####################################### FUNCTION #############################################   
+    double *allocate(int length){
     
-    zgr = (double *) calloc(length, sizeof(double));
-    if (zgr == NULL){
-    
-        printf("Speicherfehler!\n");
-        printf("Beim Reservieren eines Vektors von Datentyp: \"double\" ist ein Fehler aufgetreten!\n");
-        printf("Funktion: *create_fvector\n");
-        printf("Rueckgabe: NULL\n");
-                  
-        return NULL;
+        double *zgr;
+        
+        zgr = (double *) calloc(length, sizeof(double));
+        if (zgr == NULL){
+            longjmp(env, 1);
+        }
+        else{
+            return zgr;
+        }   
     }
-    else{
-        return zgr;
+    // ##############################################################################################
+    switch(setjmp(env)){
+        case 0: return allocate(length);
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n>>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return NULL;
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NULL;
     }   
 }
 
 
 
-// ##################################################################################################
 
+// ##################################################################################################
+// ##################################################################################################
 
 
 int *create_vector(int length){
 
     /*
-        Erstellt einen Vektor vom Datentyp "integer" der Laenge "length".
+        DESCRIPTION:
+        Allocates memory for a vector of datatype int and length. 
         
-        Rückgabewert: 
-        Erfolg: Ein Zeiger des Datentyps "integer" auf das Feld [0] des Vektors.
-        Fehler: NULL.       
+        INPUT:
+        int length	...	length of the vector you want to allocate.
+        
+        OUTPUT:
+        on success	...	pointer to this vector
+        on failure	...	NULL
+              
     */
 
+    jmp_buf env;
     int idx;
-    int *zgr;
+
     
+    // ####################################### FUNCTION #############################################   
+    int *allocate(int length){
     
-    zgr = (int *) calloc(length, sizeof(int));
-    if (zgr == NULL){
-    
-        printf("Speicherfehler!\n");
-        printf("Beim Reservieren eines Vektors von Datentyp: \"double\" ist ein Fehler aufgetreten!\n");
-        printf("Funktion: *create_vector\n");
-        printf("Rueckgabe: NULL\n"); 
-                  
-        return NULL;
+        int *zgr;
+        
+        zgr = (int *) calloc(length, sizeof(int));
+        if (zgr == NULL){
+            longjmp(env, 1);
+        }
+        else{
+            return zgr;
+        }   
     }
-    else{
-        return zgr;
+    // ##############################################################################################
+    switch(setjmp(env)){
+        case 0: return allocate(length);
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n>>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return NULL;
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NULL;
     }   
 }
-
-
 
 
 // ##################################################################################################
@@ -761,91 +781,103 @@ int create_distance_matrix(struct usr_map *Map){
 int create_variogram(struct usr_map *Map){
 
     /*
-        1. Definiert die Abstandsklassen:
-        -> Maximaler Abstand zweier Punkte in Deutschland 900 km.
-        -> Einteilung in 50 km Klassen -> 18 Klassen.
+        DESCRIPTION:
+        1. Defines classes of distance
+        -> maximum distance between two points in germany is 900 km.
+        -> categorization in distance-classes with a width of 50 km. -> 18 classes .
         
-        2. Berechnung der mittleren Distanz aller Punkte einer Abstandsklasse.
-        3. Berechnung der mittleren Varianz aller Punkte einer Abstandsklasse.
+        2. Calculates the average distance of all point of a specific distance interval (class).
+        3. Calculates the average variance of these distance classes.
         
-        Rückgabewert:
-        Erfolg: True "1"
-        Fehler: False "0"
+        INPUT:
+        struct usr_map *Map	...	pointer to the map object.
+        
+        OUTPUT: (errorcode)
+        on success		...	EXIT_SUCCESS
+        on failure		...	EXIT_FAILURE
         
     */
     
-    int idx, kdx, ndx;
-    int numValue;
-    double semiVarianz;
-    double avgDistance;
-    double sumPowValue;		// Summe der quadratischen abweichungen pro Abstandsklasse.
-    double distance;
-    double sumDistance;
-    double sumClassVarianz;
-    double sumClassDistance;
-    double **input_data_poly_reg;
-    double *solution;
+    jmp_buf env;
+    int idx, jdx, kdx;
     
-    printf("Erstelle Variogramm ... ");
-    fflush(stdout);
+    // ####################################### FUNCTION #############################################    
+    void create(struct usr_map *Map){
     
-    // Abstandsklassen erstellen (max. Abstand / Intervallgröße):
-    Map->variogram.numClasses = (int)(Map->variogram.maxDistance / Map->variogram.distInterval);
+        int numValue;
+        double semiVarianz;
+        double avgDistance;
+        double sumPowValue;		// Summe der quadratischen abweichungen pro Abstandsklasse.
+        double distance;
+        double sumDistance;
+        double sumClassVarianz;
+        double sumClassDistance;
+        double **input_data_poly_reg;
+        double *solution;    
+        
+        
+        if (Map->show_output){
+            printf("Erstelle Variogramm ... ");
+            fflush(stdout);
+        }
+    
+        // Calculate the number of distance classes with given max. distance and the wanted interval width:
+        Map->variogram.numClasses = (int)(Map->variogram.maxDistance / Map->variogram.distInterval);
+        if (Map->variogram.numClasses <= 0){
+            longjmp(env, 1);
+        }
 
-    // Reservieren eines Vektors des Datentyps "usr_vario_class" in die Informationen der Variogrammklassen eingetragen werden sollen.
-    Map->variogram.classes = (struct usr_vario_class *) malloc(Map->variogram.numClasses * sizeof(struct usr_vario_class));
-    if (Map->variogram.classes == NULL){
-    
-        printf("Speicherfehler: Variogram\n");
-        return false;
-    
-    }
-    else{
-        // Attribute der Abstandsklassen erstellen (lowerLimit / upperLimit):
+        // Allocate a matrix of type "usr_vario_class" to store all the relevant information to the variogram.
+        Map->variogram.classes = (struct usr_vario_class *) malloc(Map->variogram.numClasses * sizeof(struct usr_vario_class));
+        if (Map->variogram.classes == NULL){
+            longjmp(env, 2);
+        }
+        
+        // Create the attributs of the variogram-classes (lowerLimit / upperLimit):
         for (idx=1; idx<=(Map->variogram.numClasses); idx++){
         
-            Map->variogram.classes[idx-1].lowerLimit = (int)((idx-1)*Map->variogram.distInterval);
-            Map->variogram.classes[idx-1].upperLimit = (int)((idx)*Map->variogram.distInterval);
-            Map->variogram.classes[idx-1].num_variance_values = 0;
-            Map->variogram.classes[idx-1].num_distance_values = 0;
-            Map->variogram.classes[idx-1].variance_avg = 0;
-            Map->variogram.classes[idx-1].distance_avg = 0;
+            Map->variogram.classes[idx-1].lowerLimit = (int)((idx-1)*Map->variogram.distInterval);	// lower Limit of the distance class in km.
+            Map->variogram.classes[idx-1].upperLimit = (int)((idx)*Map->variogram.distInterval);	// upper limit of the distance class in km.
+            Map->variogram.classes[idx-1].num_variance_values = 0;					// set the start value to the number of variance value of a class 
+            Map->variogram.classes[idx-1].num_distance_values = 0;					// set the start value to the number of distance values of a class
+            Map->variogram.classes[idx-1].variance_avg = 0;						// set 0 as default value for average variance
+            Map->variogram.classes[idx-1].distance_avg = 0;						// set 0 as default value for average distance
         
         }
         
-        // Berechnen der mittleren Semivarianz für jede Abstandsklasse über alle Punkte:
-        // Nimm eine Station aus dem Input-Datensatz:
+        // Calculate now the average semivariance for any distance class over all datapoints:
+        // Take a station out of the input dataset.
         for (idx=0; idx<Map->input_data.length; idx++){
                         
             
-            // Prüfe nun über die Abstandsklassen, welche Stationen dazugehören und bilde davon die Semivarianz
-            // Nimm eine Abstandsklasse:
-            for (kdx=0; kdx<Map->variogram.numClasses; kdx++){
+            // check over the distance classes to what distance classes this station belongs to:
+            // Take a distance class:
+            for (jdx=0; jdx<Map->variogram.numClasses; jdx++){
             
-                // Setze den Zwischenwert, Zähler und den Wert der Semivarianz der Abstandsklasse auf 0;
-                sumPowValue = 0;	// Summe der quadratischen Abweichungen
-                numValue = 0;		// Anzahl der quadratischen Abweichungen
-                semiVarianz = 0;	// Semivarianz der Abstandsklasse für diese Station
-                sumDistance = 0;	// Summe der Distanzen 
+                // Set the start values to 0:
+                sumPowValue = 0;	// sum of the powered differences
+                numValue = 0;		// number of the powered differences
+                semiVarianz = 0;	// Semivariance for this station of a specific distance class
+                sumDistance = 0;	// sum of all distances for this distance class
             
-                // Vergleiche den Messwert dieser Station mit jedem anderen:
-                // Nimm nun eine Vergleichsstation aus dem Input-Datensatz:
-                for (ndx=0; ndx<Map->input_data.length; ndx++){
+                // Now compare the value of the station with the other ones
+                // Take a station out of the input dataset to compare its value with the current one:
+                for (kdx=0; kdx<Map->input_data.length; kdx++){
                 
-                    // Der Messwert einer Station, soll nicht mit sich selbst verglichen werden:
-                    if (idx != ndx){
+                    // Dont compare a station with itself:
+                    if (idx != kdx){
                 
-                        // Berechne nun den Abstand zwischen der Station und der Vergleichsstation:
+                        // Calculate the distance between this station with a station we want to compare with
                         distance = calc_distance(Map->input_data.data[idx].lat, 
                                                  Map->input_data.data[idx].lon, 
-                                                 Map->input_data.data[ndx].lat,
-                                                 Map->input_data.data[ndx].lon);
+                                                 Map->input_data.data[kdx].lat,
+                                                 Map->input_data.data[kdx].lon);
                         
-                        // Liegt die Distanz der beiden Stationen in der aktuell ausgewählten Abstandsklasse, ...
-                        // ... so füge sie der Berechnung der Semivarianz hinzu:
-                        if ((Map->variogram.classes[kdx].lowerLimit < distance) && (distance <= Map->variogram.classes[kdx].upperLimit)){
+                        // Is the distance located in the current selected distance class;
+                        // ... add this station to the current distance and variance value of the distance class.
+                        if ((Map->variogram.classes[jdx].lowerLimit < distance) && (distance <= Map->variogram.classes[jdx].upperLimit)){
                         
-                            sumPowValue += pow((Map->input_data.data[idx].value - Map->input_data.data[ndx].value),2);
+                            sumPowValue += pow((Map->input_data.data[idx].value - Map->input_data.data[kdx].value),2);
                             
                             sumDistance += distance;
                             
@@ -854,81 +886,87 @@ int create_variogram(struct usr_map *Map){
                             
                         }
                         else{
-                        // Liegt die Distanz der beiden Stationen nicht in der aktuell ausgewählten Abstandsklasse, ...
-                        // so nimm die nächste Station:
+                            // Is the distance not located in the curretn selected class than take another one.
                             continue;
                         }
                 
                     }
                     else{
-                    // Handelt es sich um die gleiche Station, so nimm die nächste Station:
+                        // take another station if it is the same station:
                         continue;
                     }
                 }
-                
-                // Wurden alle Vergleichsstationen durchlaufen, so berechne den Semivarianzwert der Abstanzklasse und füge ihn der Abstandsklasse hinzu, wenn er größer 0 ist:
-                // 1. Prüfe zuerste, ob der Wert der Summe der quatratischen Abweichungen > 0 ist, um einer Division durch 0 zuvor zu kommen: 
+               
+                // If all stations were compared with each other, calculate the semivariance of each distance class and add it to the distance class if it is greater then 0:
+                // Check if the sum is greater then 0 to prevent division by 0:
                 if (sumPowValue > 0){
                 
-                    // 2. Berechne die Semivarianz:
+                    // 2. Calculate the semivariance
                     semiVarianz = (double)(sumPowValue / (2*numValue));
                     
-                    // 3. Berechne die durchschnittl. Distanz dieser Klasse für diese Station
+                    // 3. calculate the average distance for this distance class for this station:
                     avgDistance = (double)sumDistance / numValue;
                     
                     if ((semiVarianz > 0) && (avgDistance > 0)){
                 
-                        // Füge den Semivarianzwert der Klasse hinzu:
-                        Map->variogram.classes[kdx].variance_values[Map->variogram.classes[kdx].num_variance_values++] = semiVarianz;
+                        // Add the value of semivariance to the coresponding distance class:
+                        Map->variogram.classes[jdx].variance_values[Map->variogram.classes[jdx].num_variance_values++] = semiVarianz;
                         
                         // Füge die durchschnittl. Distanz dieser Klasse für diese Station hinzu: 
-                        Map->variogram.classes[kdx].distance_values[Map->variogram.classes[kdx].num_distance_values++] = avgDistance;                      
+                        Map->variogram.classes[jdx].distance_values[Map->variogram.classes[jdx].num_distance_values++] = avgDistance;                      
                     }
                     else{
                         continue;
                     }
                 }
-                // Weiter mit der nächsten Abstandsklasse:
+                // continue with the next class
                 continue; 
             }
         }
                     
-        // Berechne die Mittelwerte der Semivarianzen und Distanzen einer jeden Abstandsklasse:
+        // Now calculate the average of the distance and semivariance of each distance class:
         for (idx=0; idx<Map->variogram.numClasses; idx++){
         
             sumClassVarianz = 0.0;
             sumClassDistance = 0.0;
         
-            // Besitzt die Abstandsklasse mindestenz eine Semivarianz bzw. Durchschnittsdistanz:
+            // There must be at least one semivariance value
             if ((Map->variogram.classes[idx].num_variance_values > 0) && (Map->variogram.classes[idx].num_variance_values > 0)){
         
-                for (kdx=0; kdx<Map->variogram.classes[idx].num_variance_values; kdx++){
+                for (jdx=0; jdx<Map->variogram.classes[idx].num_variance_values; jdx++){
             
-                    sumClassVarianz += Map->variogram.classes[idx].variance_values[kdx];
-                    sumClassDistance += Map->variogram.classes[idx].distance_values[kdx];
+                    sumClassVarianz += Map->variogram.classes[idx].variance_values[jdx];
+                    sumClassDistance += Map->variogram.classes[idx].distance_values[jdx];
                 }
                 
                 Map->variogram.classes[idx].variance_avg = sumClassVarianz / (double)(Map->variogram.classes[idx].num_variance_values);
                 Map->variogram.classes[idx].distance_avg = sumClassDistance / (double)(Map->variogram.classes[idx].num_distance_values);
             }
-            // Sonst setze den Mittelwert der Semivarianz auf 0.0:  
+            // else set it to 0  
             else{
             
-                Map->variogram.classes[kdx].variance_avg = sumClassVarianz;
-                Map->variogram.classes[kdx].distance_avg = sumClassDistance;                
+                Map->variogram.classes[jdx].variance_avg = sumClassVarianz;
+                Map->variogram.classes[jdx].distance_avg = sumClassDistance;                
                 continue;
             }
         }
         
-        printf("ok.\n");
-           
-        return true;
-        
+        if (Map->show_output){
+            printf("ok.\n");
+        }
+    }
+    // ##############################################################################################
+
+    switch(setjmp(env)){
+        case 0: create(Map); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> There must be at least one variogram class.\n", __FILE__, __LINE__); return EXIT_FAILURE;
+        case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;        
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
     }
 }
 
 
-
+// ##################################################################################################
 // ##################################################################################################
 
 
@@ -936,105 +974,146 @@ int create_variogram(struct usr_map *Map){
 int get_variogram_model(struct usr_map *Map){
 
     /*
-        Findet anhand des Variograms das dazu passende Modell:
+    
+        DESCRIPTION:
+        Finds on the basis of the semivarince values of the variogram the appropriate model.
         
-        1: Finde eine Polynomfunktion 4. Grades, die den Verlauf der Semivarianzwerte über die lags gut wiedergibt.
-        2: Finde mit Hilfe dieser Polynomfunktion einen Wert für:
+        1: Find a polynomic function of order 4 that fits best to the semivariance values of the variogram
+        2: Find with the help of this function the following values for a possible exponential model:
            - sill
            - range
        
-        Bereite die ermittelten Werte für:
+        prepare the following values
            - distance_avg (x-Werte)
            - variance_avg (y-Werte)
-        so auf, dass eine polynominale Rekurssion durchgeführt werden kann:
+        to perform a polynomic regression.
+        
+        INPUT:
+        struct usr_map *Map	...	pointer to the map object
+        
+        OUTPUT: (error code)
+        on success:		...	EXIT_SUCCESS
+        on failure:		...	EXIT_FAILURE        
+        
     */
     
     int idx, jdx;
-    int cnt_neg_slope;
-    int cnt_raising_slope;
-    int itemp;
-    int *density_variances;  
+    jmp_buf env;
+    
+    // ####################################### FUNCTION #############################################    
+    void get_model(struct usr_map *Map){    
+    
+    
+        int cnt_neg_slope;
+        int cnt_raising_slope;
+        int itemp;
+        int *density_variances;  
       
-    double sill, range, RSME, interval;		//
-    double RSME_min=-1;				// Minimumwert des RSME
-    double y_max;				// Maximumwert der Vorhersagewerte der Semivarianzen
-    double **input_data_poly_reg;		// Doppelzeiger auf Matrix mit Eingabedaten.
-    double *diff_variance_avg_reg;		// abgeleitete Werte der Vorhersagewerte der Semivarianz mittels polyn. Regression
-    double *calc_variances;			// berechnete Werte der Semivarainz pro lag mit Hilfe der exponentiellen Funktion
-    double *variogram_variances;		// Semivarianzwerte der lags des Variogramms bis zum gesuchten Vergleichsindex.
+        double sill, range, RSME, interval;	//
+        double RSME_min=-1;			// Minimumwert des RSME
+        double y_max;				// Maximumwert der Vorhersagewerte der Semivarianzen
+        double **input_data_poly_reg;		// Doppelzeiger auf Matrix mit Eingabedaten.
+        double *diff_variance_avg_reg;		// abgeleitete Werte der Vorhersagewerte der Semivarianz mittels polyn. Regression
+        double *calc_variances;			// berechnete Werte der Semivarainz pro lag mit Hilfe der exponentiellen Funktion
+        double *variogram_variances;		// Semivarianzwerte der lags des Variogramms bis zum gesuchten Vergleichsindex.
+        double tmp;				// temporary variable, commonly used for checking purposes
 		
     
-    printf("Bestimme das Variogrammmodell ... ");
+        if (Map->show_output){
+            printf("Get variogram model ... ");
+            fflush(stdout);
+        }
     
-    // Reserviere Speicher für die Eingabedaten:
-    input_data_poly_reg = create_fmatrix(Map->variogram.numClasses, 2);
+        // allocate memory for the input dataset for the polynomic regression
+        input_data_poly_reg = create_fmatrix(Map->variogram.numClasses, 2);
+        if (input_data_poly_reg == NULL){
+            longjmp(env, 1);
+        }
     
-    // Reserviere Speicher für die Varianzwerte des Variogramms:
-    variogram_variances = create_fvector(Map->variogram.numClasses);
-    
+        // allocate memory for the variance values of the variogram
+        variogram_variances = create_fvector(Map->variogram.numClasses);
+        if (variogram_variances == NULL){
+            longjmp(env, 1);
+        }   
 
-    // Bereite die ermittelten Werte für:
-    // - distance_avg (x-Werte)
-    // - variance_avg (y-Werte)
-    // so auf, dass eine polynominale Rekurssion durchgeführt werden kann:
-    // Übertrage die Eingabedaten in ein Array:
-    for (idx=0; idx<Map->variogram.numClasses; idx++){
+        /*
+            prepare the following values
+                - distance_avg (x-Werte)
+                - variance_avg (y-Werte)
+            to perform a polynomic regression.
+        */
         
-        // Übertrage x-Werte:
-        input_data_poly_reg[idx][0] = Map->variogram.classes[idx].distance_avg;
-        
-        // Übertrage y-Werte:
-        input_data_poly_reg[idx][1] = Map->variogram.classes[idx].variance_avg; 
-        
-        // Übertrage y-Werte in Vektor:
-        variogram_variances[idx] = Map->variogram.classes[idx].variance_avg; 
-    }
-    
-
-
-    // Berechne nun die polynimiale Refgressionsfunktion 4. Grades:
-    // liefert bei Erfolg einen Zeiger auf die Gewichte der Regressionsfunktion:
-    Map->variogram.reg_function.solution = polynomial_regression(input_data_poly_reg, 
-                                                                 Map->variogram.numClasses, 
-                                                                 Map->variogram.reg_function.order);
-                                                                 
-                                                                 
-                                                                
-    if (Map->variogram.reg_function.solution == NULL){
-        return false;
-    }
-    else{
-        
-        // Berechne mit Hilfe der Regressionsfunktion die Vorhersagewerte der Semivarianz ...
-        // ... über die Durchschnittsentfernungen der Semivarianzklassen des Variogramms.
         for (idx=0; idx<Map->variogram.numClasses; idx++){
         
-            // Übergib den Startwert / Schnittpunkt mit y-Achse (b0)
-            Map->variogram.classes[idx].variance_avg_reg = Map->variogram.reg_function.solution[0];
-            
-            // Summiere dann über die Potenzen auf:
-            for (jdx=1; jdx<=Map->variogram.reg_function.order; jdx++){
-            
-                Map->variogram.classes[idx].variance_avg_reg += (Map->variogram.reg_function.solution[jdx] * pow(Map->variogram.classes[idx].distance_avg, jdx));
+            // transfer x-values:
+            input_data_poly_reg[idx][0] = Map->variogram.classes[idx].distance_avg;
+        
+            // transfer y-values:
+            input_data_poly_reg[idx][1] = Map->variogram.classes[idx].variance_avg; 
+        
+            // Übertrage y-Werte in Vektor:
+            variogram_variances[idx] = Map->variogram.classes[idx].variance_avg; 
+        }
+    
 
+
+        // Calculate the polynomic regression of 4th order.
+        /* Is successful it returns a pointer to an array of length order +2 with the solutions
+           Example:
+           Order(n): 4
+           
+           array[0] to array[n]		...	contains the weights of the polynomic function from b0 to bn
+           array[n+1] 			...	contains the coefficient of determination
+        */
+        Map->variogram.reg_function.solution = polynomial_regression(input_data_poly_reg, 
+                                                                     Map->variogram.numClasses, 
+                                                                     Map->variogram.reg_function.order);
+        if (Map->variogram.reg_function.solution == NULL){
+            longjmp(env, 2);
+        }
+        
+        // Calculate on the basis of the regress function the predicted value for the semivariance 
+        // ... over the average distances of the semivariances
+        for (idx=0; idx<Map->variogram.numClasses; idx++){
+        
+             
+            // start value is weight0 (b0):
+            if ((isnan(Map->variogram.reg_function.solution[0])) || (isinf(Map->variogram.reg_function.solution[0]))){
+                longjmp(env, 4);
+            }
+            else{
+                Map->variogram.classes[idx].variance_avg_reg = Map->variogram.reg_function.solution[0];
+            }
+            
+            // sum over the powers:
+            for (jdx=1; jdx<=Map->variogram.reg_function.order; jdx++){
+                    
+                // check for nan and inf values within the predicted variance data:
+                tmp = (Map->variogram.reg_function.solution[jdx] * pow(Map->variogram.classes[idx].distance_avg, jdx));
+                if ((isnan(tmp)) || (isinf(tmp))){
+                    longjmp(env, 3);
+                }
+                else{
+                    Map->variogram.classes[idx].variance_avg_reg += tmp;
+                }
             }
         }
         
-
-        // Finde den Bereich (Index) des Semivariogramms, an den die exponentielle Funktion angepasst werden soll.
+        // Now found the part of the polynomic function you want to adjust the exponential model
         find_model_adjust_index(Map, variogram_variances, Map->variogram.numClasses);
 
-        // Reserviere Speicher für die berechneten Werte der Semivarianz mit Hilfe des exponentiellen Modells:
+        // allocate memory for the calculated variances on basis of the exponential model:
         calc_variances = create_fvector(Map->variogram.model_adjust_index);
+        if (calc_variances == NULL){
+            longjmp(env, 1);
+        }
 
-        // Ziel ist es nun, den sill und die range für ein exponentielles Modell zu finden.
-        // Dies geschieht, indem so lange der sill und die range verändert wird, bis der RSME minimal wird.
-        // Bestimme nun über diese Werte den RSME_min:
+        // find sill and range for exponential model:
         for (sill=0; sill<100; sill++){
         
             for (range=0; range<=Map->variogram.classes[Map->variogram.model_adjust_index].distance_avg; range+=0.1){
             
-                // Berechne die Semivarianz mit Hilfe des exponentiellen Modells:
+                // Calculate the semivariance with the help of the exponential model:
                 for (idx=0; idx<Map->variogram.model_adjust_index; idx++){
                 
                     calc_variances[idx] = calc_covariance(Map->variogram.classes[idx].distance_avg, 
@@ -1042,9 +1121,14 @@ int get_variogram_model(struct usr_map *Map){
                                                           Map->variogram.nugget, 
                                                           range);
                 }
-                                                     
+                
+                // get the error by calculating the rsme:
                 RSME = calc_RSME(calc_variances, variogram_variances, Map->variogram.model_adjust_index);                                 
-                    
+                if (isnan(RSME) || (isinf(RSME))){
+                    longjmp(env, 5);
+                }
+                   
+                // take over the values of sill and range as long as they are smaller then the prevoius ones.
                 if ((RSME < RSME_min) || (RSME_min < 0)){
             
                     RSME_min = RSME;
@@ -1059,9 +1143,12 @@ int get_variogram_model(struct usr_map *Map){
         }
         
         
-        // Übergib dem Modell den Wert des nuggets:
-        // nugget negativ: -> 0.001:
-        // sonst: -> b0, Regressionsfunktion
+        // check previously if b0-weight is nan or inf:
+        if ((isnan(Map->variogram.reg_function.solution[0])) || (isinf(Map->variogram.reg_function.solution[0]))){
+            longjmp(env, 4);
+        }
+        
+        // pass the value of the nugget to the model:
         if (Map->variogram.reg_function.solution[0] < 0){
             Map->variogram.nugget = 0.001;
         }
@@ -1070,7 +1157,7 @@ int get_variogram_model(struct usr_map *Map){
         }
         
         
-        // Speicher der Eingabedaten freigeben:
+        // deallocate the memory
         for (idx=0; idx<Map->variogram.numClasses; idx++){
             free(input_data_poly_reg[idx]);
         }
@@ -1078,9 +1165,21 @@ int get_variogram_model(struct usr_map *Map){
         free(input_data_poly_reg);    
         free(calc_variances);    
         free(variogram_variances);
-    
-        printf("ok\n");
-        return true;
+        
+        if (Map->show_output){
+            printf("ok\n");
+        }
+    }
+    // ##############################################################################################
+
+    switch(setjmp(env)){
+        case 0: get_model(Map); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;                
+        case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> The solution for the polynomic regression returns NULL!\n", __FILE__, __LINE__); return EXIT_FAILURE;
+        case 3: fprintf(stderr, "ERROR: %s --> %d:\n >>> The vector of the predicted variances contains \"NAN\" or \"INF\" values!\n", __FILE__, __LINE__); return EXIT_FAILURE;
+        case 4: fprintf(stderr, "ERROR: %s --> %d:\n >>> The value of the b0 weight is \"NAN\" or \"INF\"!\n", __FILE__, __LINE__); return EXIT_FAILURE;
+        case 5: fprintf(stderr, "ERROR: %s --> %d:\n >>> The calculated value of the RSME is \"NAN\" or \"INF\"!\n", __FILE__, __LINE__); return EXIT_FAILURE;        
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
     }
 }
 
@@ -1090,69 +1189,90 @@ int get_variogram_model(struct usr_map *Map){
 
 
 
-void find_model_adjust_index(struct usr_map *Map, double *variogram_variances, int length){
+int find_model_adjust_index(struct usr_map *Map, double *variogram_variances, int length){
 
     /*
-        Findet den (lag)-Index des Variogramms bis zu dem das exponentielle Modell angepasst werden soll.
+        DESCRIPTION:
+        Finds the (lag)-index of the variogram we want to adjust the exponential model with.
         
-        Hintergrund:
-        Im Variogramm ist jedem lag, eine mittlere Distanz und Semivarianz zugeordnet.
-        Der Verlauf entspricht im Groben einem exponetiellen Verlauf der Form:
+        BACKGROUND:
+        any lag of the varigram is defined by a average distance and a average semivarianz.
+        The progress of the semivariance follows a exponential function defined by:
         
         nugget + sill * (1-exp(-|distance|/a)), mit a = range/3;
         
-        Es ist nun erforderlich den Index des lags zu finden, bis zu dem dieses Modell angepasst werden soll.
-        Die Semivarianzwerte des Variogramms zeigen gerade bei hohen Distanzen Extremwerte der Semivarianz, die
-        bei einer Anpassung des Modells nicht berücksichtigt werden sollen.
+        Now we have to find the index of that lag until we want to adjust the expontential model.
+        
+        INPUT:
+        struct usr_map *Map		...	pointer to the map object
+        double *variogram_variances	...	pointer an array with a copy of the variogram variances
+        int length			...	lenght of that array.
         
     */
 
-    int idx, jdx, imax=0;
-    int *density_variances;
-    double y_max, interval;
+    int idx, jdx;
+    jmp_buf env;
+    
+    // ####################################### FUNCTION #############################################    
+    void get_index(struct usr_map *Map){
     
     
-    // Vektor für die Verteilung der Semivarianzen in den einzelnen Intervallen:
-    density_variances = create_vector(Map->variogram.numClasses);
     
-    // Liefert den Maximumwert der Semivarianzen des Variogramms:
-    y_max = get_fmax(variogram_variances, Map->variogram.numClasses);
+        int imax=0;
+        int *density_variances;
+        double y_max, interval;
     
-    // Berechne die Intervallgröße mit dem Maximalwert der Semivarianz und der Anzahl der lags.
-    interval = y_max/Map->variogram.numClasses;
+    
+        // vector of the destribution of the semivariances of the distance classes:
+        density_variances = create_vector(Map->variogram.numClasses);
+        if (density_variances == NULL){
+            longjmp(env, 1);
+        }
+    
+        // gives you the maximum value of the semivariance vector
+        y_max = get_fmax(variogram_variances, Map->variogram.numClasses);
+    
+        // Calculates the width of an interval out of the maximum value and the number of intervals
+        interval = y_max/Map->variogram.numClasses;
        
-    // Bestimme nun, wie viele Semivarianzen den entsprechenden Intervallen zuzuordnen sind und ...
-    // ... ordne sie dem Vektor "density_variances" zu.
-    for (idx=0; idx<Map->variogram.numClasses; idx++){
+        // Count the number of semivarinaces and assign them to the vecor desity_variances
+        for (idx=0; idx<Map->variogram.numClasses; idx++){
         
-        for (jdx=0; jdx<Map->variogram.numClasses-1; jdx++){
+            for (jdx=0; jdx<Map->variogram.numClasses-1; jdx++){
             
-            if ((variogram_variances[idx] > jdx*interval) && (variogram_variances[idx] < (jdx+1)*interval)){
+                if ((variogram_variances[idx] > jdx*interval) && (variogram_variances[idx] < (jdx+1)*interval)){
                 
-                density_variances[jdx]++;
+                    density_variances[jdx]++;
+                }
             }
         }
-    }
         
-    // Prüfe nun, an welchem Index des Density_vektors der Maximumwert auftritt.
-    // Sollte er mehrfach auftreten, so nimm das letzte Auftreten;
-    for (idx=0; idx<Map->variogram.numClasses; idx++){
+        // now find the maximum value within the density_variances vector
+        // take the first occurence
+        for (idx=0; idx<Map->variogram.numClasses; idx++){
         
-        if (density_variances[idx] == get_max(density_variances, Map->variogram.numClasses)){
+            if (density_variances[idx] == get_max(density_variances, Map->variogram.numClasses)){
                 
-            imax = idx;
+                imax = idx;
+            }
         }
-    }
 
-    // Bilde nun die Summe über die Anzahl der Semivarianzwerte bis zum Interval mit den meisten Werten.
-    for (idx=0; idx<=imax; idx++){
+        // Now make the sum over the number of all semivariances until the the interval with the most values.
+        for (idx=0; idx<=imax; idx++){
+            Map->variogram.model_adjust_index += density_variances[idx];
         
-        Map->variogram.model_adjust_index += density_variances[idx];
+        }
         
+        free(density_variances);
     }
+    // ##############################################################################################
 
-
-    free(density_variances);
+    switch(setjmp(env)){
+        case 0: get_index(Map); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> There must be at least one variogram class.\n", __FILE__, __LINE__); return EXIT_FAILURE;
+        case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;        
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    }   
 }
 
 
@@ -1161,76 +1281,96 @@ void find_model_adjust_index(struct usr_map *Map, double *variogram_variances, i
 
 
 
-double **create_covariance_matrix(struct usr_map *Map, double **matrix, int rows, int cols){
+int create_covariance_matrix(struct usr_map *Map){
 
     /*
-        Berechnet anhand der Distanz-Matrix und dem definierten Semivarianzmodell
-        die Kovarianzmatrix der Dimensionen rows x cols.
+        DESCRIPTION:
         
-        Rückgabewert:
-        Erfolg: Ein Doppelzeiger vom Datentyp "double" auf das Feld [0][0] der Kovarianzmatrix mit den Dimensionen rows x cols.
-        Fehler: NULL
+        Creates by using the determined semivariance model a covariance matrix.
         
+        INPUT:
+        struct usr_map *Map	...	pointer to the map object
+
+        OUTPUT: (error code)
+        on success		...	EXIT_SUCCESS
+        on failure		...	EXIT_FAILURE
     */
 
-    int idx, kdx;
-    double **covariance_matrix;
+    int idx, jdx;
+    jmp_buf env;
 
+    // ####################################### FUNCTION #############################################    
+    void create_matrix(struct usr_map *Map){   
 
+        double **covariance_matrix;
+        double tmp;	 		// temporary value for checking purposes
 
-    printf("Berechne die Kovarianzmatrix ... ");
-    fflush(stdout);
+        if (Map->show_output){
+            printf("Berechne die Kovarianzmatrix ... ");
+            fflush(stdout);
+        }
 
-    // Reservieren der Kovarianzmatrix:   
-    covariance_matrix = create_fmatrix(rows, cols);
+        // Reservieren der Kovarianzmatrix:   
+        covariance_matrix = create_fmatrix(Map->input_data.length+1, Map->input_data.length+1);
+        if (covariance_matrix == NULL){
+            longjmp(env, 1);
+        }
     
-    if (covariance_matrix == NULL){
-    
-        printf("Speicherfehler: Kovarianzmatrix\n");
-        return NULL;
-    
-    }
-    else{
         // Berechne die Kovarianzen:
-        for (idx=0; idx<rows; idx++){
-                
-            for (kdx=0; kdx<cols; kdx++){
+        for (idx=0; idx<Map->input_data.length+1; idx++){
+            for (jdx=0; jdx<Map->input_data.length+1; jdx++){
+            
                 // Ist der zu berechnende Wert gleich der letzten Spalte und der letzten Zeile,
-                // ... so setze ihn auf 0:                
-
-                if ((idx == (rows-1)) && (kdx == (cols-1))){
+                // ... so setze ihn auf 0:
+                if ((idx == (Map->input_data.length)) && (jdx == (Map->input_data.length))){
                 
-                    covariance_matrix[idx][kdx] = 0;
+                    covariance_matrix[idx][jdx] = 0;
                     continue;
                     
                 }
                 // Ist der zu berechnende Wert gleich der letzten Spalte, oder der letzten Zeile,
                 // ... so setze ihn auf 1:                
-                if ((idx == (rows-1)) || (kdx == (cols-1))){
+                if ((idx == (Map->input_data.length)) || (jdx == (Map->input_data.length))){
                 
-                    covariance_matrix[idx][kdx] = 1;
+                    covariance_matrix[idx][jdx] = 1;
                     continue;
                 }
                 else{
                     // Ist die Distanz 0 , dann entspricht die Kovarianz dem nugget-Wert:
-                    if (matrix[idx][kdx] < EPS){
+                    if (covariance_matrix[idx][jdx] < EPS){
                         
-                        covariance_matrix[idx][kdx] = Map->variogram.nugget;
+                        covariance_matrix[idx][jdx] = Map->variogram.nugget;
                     }
                     else{
                         
-                        covariance_matrix[idx][kdx] = calc_covariance(matrix[idx][kdx], 
-                                                                      Map->variogram.sill, 
-                                                                      Map->variogram.nugget,
-                                                                      Map->variogram.range);
-                        
+                        tmp = calc_covariance(Map->distance_matrix[idx][jdx], 
+                                              Map->variogram.sill, 
+                                              Map->variogram.nugget,
+                                              Map->variogram.range);
+                        if ((isnan(tmp)) || (isinf(tmp))){
+                            longjmp(env, 2);
+                        }
+                        else{
+                            covariance_matrix[idx][jdx] = tmp;
+                        }
                     }
                 }
             }
         }
-         
-        printf("ok!\n");
-        return covariance_matrix;
+        
+        Map->covariance_matrix = covariance_matrix;
+        
+        if (Map->show_output){
+            printf("ok!\n");
+        }
+    }
+    // ##############################################################################################
+
+    switch(setjmp(env)){
+        case 0: create_matrix(Map); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> There must be at least one variogram class.\n", __FILE__, __LINE__); return EXIT_FAILURE;                
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
     }
 }
 
@@ -1717,7 +1857,8 @@ double calc_RSME(double *values1, double *values2, int length){
 
 
     /*
-        Berechnet den RSME zwischen zwei Datenreihen über die Länge "length".
+        DESCRIPTION
+        Calculates the rsme error between two datasets of type double.
         
         Input:
         values1		...	Datenreihe 1
@@ -1725,24 +1866,45 @@ double calc_RSME(double *values1, double *values2, int length){
     */
 
     int idx;
+    jmp_buf env;
     
-    double qsum=0;		// Summe der quadrierten Abweichungen
+    // ####################################### FUNCTION #############################################    
+    double rsme(double *values1, double *values2, int length){    
     
     
-    for (idx=0; idx<=length; idx++){
+        double qsum=0;		// sum of the powered differences.
     
-        qsum += pow((values1[idx] - values2[idx]),2);
+        if (length <= 0){
+            longjmp(env, 1);
+        }
+        
+        for (idx=0; idx<=length; idx++){
     
+            if (((isnan(values1[idx])) || (isinf(values1[idx]))) ||
+               ((isnan(values2[idx])) || (isinf(values2[idx])))){
+               
+                   longjmp(env, 2);
+            }
+            else{
+                qsum += pow((values1[idx] - values2[idx]),2);
+            } 
+        }
+        return sqrt(qsum/length);
     }
-    
-    return sqrt(qsum/length);
+    // ##############################################################################################
 
+    switch(setjmp(env)){
+        case 0: return rsme(values1, values2, length);
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); return NAN;
+        case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> The datasets contains NAN or INF values!\n", __FILE__, __LINE__); return NAN;        
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+    }
 }
 
 double get_fmax(double *values, int length){
 
     /*
-        Bestimmt den Maximaumwert einer Datenreihe des Typ "double".
+        Return the maximum value of a given vector.
     */
     
     int idx;
@@ -2056,122 +2218,170 @@ int get_output_information(struct usr_map *Map){
 
 
 
-void check_matrix(double **matrix, int rows, int cols){
+int check_matrix(double **matrix, int rows, int cols, bool show_output){
 
     /*
-        Prüft Matrizen auf nan-Werte und liefert eine Übersicht der Anzahl von pos. wie neg. Werten.
+        DESCRIPTION:
+        Checks a matrix of type double if it contains nan or inf - values.
+        If "show_output" set to true it outputs finally a summary of the results, otherwise it will
+        only show results if nan- or inf values are included.
+    
+        INPUT:
+        double **matrix		...	pointer to the matrix
+        int rows		...	number of rows of that matrix
+        int cols		...	number of cols of that matrix
+        bool show_output	...	show results after the checks?
+    
+        OUTPUT:(error code)
+        on success		...	EXIT_SUCCESS
+        on failure		...	EXIT_FAILURE
+        
     */
     
+    jmp_buf env;
     int idx, jdx;
     
-    int cnt_nan = 0;
-    int cnt_neg = 0;
-    int cnt_pos = 0;
-    
-    double max, min;
+    // ####################################### FUNCTION #############################################
+    void check(double **matrix, int rows, int cols, bool show_output){     
     
     
-    printf("Prüfe Matrix:\n");
-    printf("-----------------------\n");
+        unsigned int cnt_nan = 0;
+        unsigned int cnt_inf = 0;
+        unsigned int cnt_neg = 0;
+        unsigned int cnt_pos = 0;
     
-    for (idx=0; idx<rows; idx++){
+        double max, min;
     
-        for (jdx=0; jdx<cols; jdx++){
+        if (show_output){
+            printf("Check matrix:\n");
+            printf("-----------------------\n");
+        }
         
-            if (isnan(matrix[idx][jdx])){
+        max=matrix[0][0];
+        min=matrix[0][0];        
+        
+        for (idx=0; idx<rows; idx++){
+            for (jdx=0; jdx<cols; jdx++){
+        
+                if (isnan(matrix[idx][jdx])){
             
-                cnt_nan++;
-                continue;
-            }
-            else if (matrix[idx][jdx] < 0){
-            
-                cnt_neg++;
-                continue;
-            }
-            else if (matrix[idx][jdx] > 0){
-            
-                cnt_pos++;
-                continue;
+                    cnt_nan++;
+                    continue;
+                }
+                else if (isinf(matrix[idx][jdx])){
+                
+                    cnt_inf++;
+                    continue;
+                }
+                else if (matrix[idx][jdx] < 0){
+                    
+                    // count the neg. value
+                    cnt_neg++;
+                    
+                    // check if the current value is higher then the current maximum
+                    if (matrix[idx][jdx] > max){
+                        max=matrix[idx][jdx];
+                    }
+                    
+                    // check if the current value is lower then the current minimum                  
+                    if (matrix[idx][jdx] < min){
+                        min=matrix[idx][jdx];
+                    }
+                    
+                    continue;
+                }
+                else if (matrix[idx][jdx] > 0){
+                
+                    // count the pos. value
+                    cnt_pos++;
+                    continue;
+                }
             }
         }
-    }
-    
+        
+        if ((show_output) || (cnt_nan > 0) || (cnt_inf > 0)){
 
-    printf("Zusammenfassung:\n");
-    printf("----------------\n");
-    max=matrix[0][0];
-    min=matrix[0][0]; 
-       
-    for (idx=0; idx<rows; idx++){
+            printf("Summary:\n");
+            printf("----------------\n");
+               
+            printf("Maximum: %.6f\n", max);
+            printf("Minimum: %.6f\n", min);
     
-        for (jdx=0; jdx<cols; jdx++){
-        
-            if (matrix[idx][jdx] > max){
-            
-                max=matrix[idx][jdx];
-            }
-            if (matrix[idx][jdx] < min){
-            
-                min=matrix[idx][jdx];
-            }
-        }
-    }    
-    printf("Maximum: %.6f\n", max);
-    printf("Minimum: %.6f\n", min);
-    
-    printf("Anzahl nan: %d\n", cnt_nan);
-    printf("Anzahl > 0: %d\n", cnt_pos);    
-    printf("Anzahl < 0: %d\n", cnt_neg);  
+            printf("Anzahl nan: %d\n", cnt_nan);
+            printf("Anzahl inf: %d\n", cnt_inf);
+            printf("Anzahl > 0: %d\n", cnt_pos);    
+            printf("Anzahl < 0: %d\n", cnt_neg);  
       
-    printf("-----------------------\n\n");
+            printf("-----------------------\n\n");
+        }
+        
+        if ((cnt_nan > 0) || (cnt_inf > 0)){
+            longjmp(env, 1);        
+        }
+        
+    }
+    // ##############################################################################################
+
+    switch(setjmp(env)){
+        case 0: check(matrix, rows, cols, show_output); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n The matrix contains \"NAN\" or \"INF\" values!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    }
 }
 
 
+// ##################################################################################################
+// ##################################################################################################
 
     
 void show_variogram_data(struct usr_map *Map){
 
     /*
-        Liefert eine Ausgabe des Variogramms.
+        DESCRIPTION:
+        shows you a summary of the variogram data if the "show_output" attribut of the map object is set to true.
     */
 
-    int idx;
-    printf("########################################################################################\n");    
-    printf("#################################### SEMIVARIOGRAMM ####################################\n\n");
-   
-    printf("--------------------------------------\n");
-    printf("Lösungen der Regressionsfunktion:\n");
-    printf("Grad:%3d\n", Map->variogram.reg_function.order);
-    for (idx=0; idx<Map->variogram.reg_function.order+1; idx++){
-        printf("b%d: %11.6f\n", idx, Map->variogram.reg_function.solution[idx]);
-    }
-    printf("R²: %8.3f\n", Map->variogram.reg_function.solution[Map->variogram.reg_function.order+1]);    
-    printf("--------------------------------------\n\n");
-        
-    printf("Abstandsklassen:\n");
-    printf("----------------------------------------------------------------------------------------\n");    
-    printf("%3s%10s%10s%15s%15s%15s\n","id", "u.Grenze", "o.Grenze", "Distanz (AVG)", "Varianz (AVG)", "Varianz (REG)");
-    for (idx=0; idx<Map->variogram.numClasses; idx++){
+    if (Map->show_output){
+
+        int idx;
     
-        printf("%3d%10d%10d%15.3f%15.3f%15.3f\n", idx,
-                                      Map->variogram.classes[idx].lowerLimit,
-                                      Map->variogram.classes[idx].upperLimit,
-                                      Map->variogram.classes[idx].distance_avg,
-                                      Map->variogram.classes[idx].variance_avg,
-                                      Map->variogram.classes[idx].variance_avg_reg);
+        printf("########################################################################################\n");    
+        printf("#################################### SEMIVARIOGRAM #####################################\n\n");
+       
+        printf("--------------------------------------\n");
+        printf("Solution of the polynomic function:\n");
+        printf("Order:%3d\n", Map->variogram.reg_function.order);
+        for (idx=0; idx<Map->variogram.reg_function.order+1; idx++){
+            printf("b%d: %11.6f\n", idx, Map->variogram.reg_function.solution[idx]);
+        }
+        printf("R²: %8.3f\n", Map->variogram.reg_function.solution[Map->variogram.reg_function.order+1]);    
+        printf("--------------------------------------\n\n");
         
-    }
-    printf("----------------------------------------------------------------------------------------\n\n");
+        printf("Distance classes:\n");
+        printf("----------------------------------------------------------------------------------------\n");    
+        printf("%3s%12s%12s%15s%15s%15s\n","id", "lower Limit", "upper Limit", "Distance (AVG)", "Variance (AVG)", "Variance (REG)");
+        for (idx=0; idx<Map->variogram.numClasses; idx++){
+    
+            printf("%3d%12d%12d%15.3f%15.3f%15.3f\n", idx,
+                                          Map->variogram.classes[idx].lowerLimit,
+                                          Map->variogram.classes[idx].upperLimit,
+                                          Map->variogram.classes[idx].distance_avg,
+                                          Map->variogram.classes[idx].variance_avg,
+                                          Map->variogram.classes[idx].variance_avg_reg);
+        
+        }
+        printf("----------------------------------------------------------------------------------------\n\n");
   
-    printf("--------------------------------------\n");
-    printf("Modell - Anpassungsindex: %d\n\n", Map->variogram.model_adjust_index);
-    printf("Lösung des Semivarianzmodells:\n");    
-    printf("nugget: %.3f\n", Map->variogram.nugget);
-    printf("sill: %.3f\n", Map->variogram.sill);
-    printf("range: %.3f\n", Map->variogram.range);
-    printf("--------------------------------------\n\n");
-    printf("########################################################################################\n");
-    printf("########################################################################################\n\n");        
+        printf("--------------------------------------\n");
+        printf("Model - fit-index: %d\n\n", Map->variogram.model_adjust_index);
+        printf("Solution of the semivariance-model:\n");    
+        printf("nugget: %.3f\n", Map->variogram.nugget);
+        printf("sill: %.3f\n", Map->variogram.sill);
+        printf("range: %.3f\n", Map->variogram.range);
+        printf("--------------------------------------\n\n");
+        printf("########################################################################################\n");
+        printf("########################################################################################\n\n");
+    }      
 }
 
 

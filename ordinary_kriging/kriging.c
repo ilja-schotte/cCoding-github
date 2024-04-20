@@ -99,28 +99,32 @@ int main(int argc, char **argv){
     
     // Erstelle eine Abstandsmatrix:
     err = create_distance_matrix(&Map);
-    (err == EXIT_FAILURE) ? exit(err) : NULL;    
+    (err == EXIT_FAILURE) ? exit(err) : NULL;
     
-    
-    exit(0);                                                                
-    check_matrix(Map.distance_matrix, Map.input_data.length, Map.input_data.length);
+    //check the matrix for nan and inf value and get the max and min value:
+    err = check_matrix(Map.distance_matrix, Map.input_data.length, Map.input_data.length, Map.show_output);
+    (err == EXIT_FAILURE) ? exit(err) : NULL;
                 
     // Erstelle aus den Messwerten ein Variogramm:
-    create_variogram(&Map);
-                
-    // Erstelle aus den Variogrammdaten ein Modell:
-    get_variogram_model(&Map);
-                
+    err = create_variogram(&Map);
+    (err == EXIT_FAILURE) ? exit(err) : NULL;
+
+    // Determine out of the semivariances the covariance model:
+    err = get_variogram_model(&Map);
+    (err == EXIT_FAILURE) ? exit(err) : NULL; 
+                       
     // Zeige Informationen zu Variogramm:
     show_variogram_data(&Map);
-                
+    
     // Erstelle die Kovarianzmatrix:
-    Map.covariance_matrix = create_covariance_matrix(&Map, 
-                                                     Map.distance_matrix, 
-                                                     Map.input_data.length+1, 
-                                                     Map.input_data.length+1);
-                                                 
-    check_matrix(Map.covariance_matrix, Map.input_data.length+1, Map.input_data.length+1);
+    err = create_covariance_matrix(&Map);
+    (err == EXIT_FAILURE) ? exit(err) : NULL;
+
+    //check the matrix for nan and inf value and get the max and min value:                                                     
+    err = check_matrix(Map.covariance_matrix, Map.input_data.length+1, Map.input_data.length+1, Map.show_output);
+    (err == EXIT_FAILURE) ? exit(err) : NULL;    
+    exit(0);
+    
     //show_matrix(Map.covariance_matrix, 20, 20);
                 
     //outputMatrixCSV(Map.covariance_matrix, "output_covMatrix.csv", Map.input_data.length+1, Map.input_data.length+1);
@@ -136,7 +140,8 @@ int main(int argc, char **argv){
                                 
     check_matrix(Map.covariance_matrix_inv, 
                  Map.input_data.length+1, 
-                 Map.input_data.length+1);
+                 Map.input_data.length+1,
+                 Map.show_output);
                              
     //show_matrix(Map.covariance_matrix_inv, 20, 20);
                 
