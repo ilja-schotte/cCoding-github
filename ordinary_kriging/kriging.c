@@ -101,6 +101,9 @@ int main(int argc, char **argv){
     err = create_distance_matrix(&Map);
     (err == EXIT_FAILURE) ? exit(err) : NULL;
     
+    
+    err = show_matrix("distance matrix", Map.distance_matrix, 20, 20, Map.show_output);
+    
     //check the matrix for nan and inf value and get the max and min value:
     err = check_matrix(Map.distance_matrix, Map.input_data.length, Map.input_data.length, Map.show_output);
     (err == EXIT_FAILURE) ? exit(err) : NULL;
@@ -123,27 +126,22 @@ int main(int argc, char **argv){
     //check the matrix for nan and inf value and get the max and min value:                                                     
     err = check_matrix(Map.covariance_matrix, Map.input_data.length+1, Map.input_data.length+1, Map.show_output);
     (err == EXIT_FAILURE) ? exit(err) : NULL;    
-    exit(0);
+
     
-    //show_matrix(Map.covariance_matrix, 20, 20);
-                
-    //outputMatrixCSV(Map.covariance_matrix, "output_covMatrix.csv", Map.input_data.length+1, Map.input_data.length+1);
-                
-    // Berechne die Determinante der Kovarianzmatrix
-    //printf("%.3f\n",determinantOfMatrix(Map.covariance_matrix, Map.input_data.length));          
-                               
-                
+    err = show_matrix("covariance matrix", Map.covariance_matrix, 20, 20, Map.show_output);
+                    
+    // outputMatrixCSV(Map.covariance_matrix, "output_covMatrix.csv", Map.input_data.length+1, Map.input_data.length+1);
+          
     // Berechne die Inverse der Kovarianzmatrix:
-    Map.covariance_matrix_inv = inverseOfMatrix(Map.covariance_matrix, 
-                                                Map.input_data.length+1, 
-                                                 Map.input_data.length+1);
-                                
-    check_matrix(Map.covariance_matrix_inv, 
-                 Map.input_data.length+1, 
-                 Map.input_data.length+1,
-                 Map.show_output);
+    err = create_inverted_covariance_matrix(&Map);
+    (err == EXIT_FAILURE) ? exit(err) : NULL;
+                                        
+    check_matrix(Map.covariance_matrix_inv, Map.input_data.length+1, Map.input_data.length+1, Map.show_output);
+    (err == EXIT_FAILURE) ? exit(err) : NULL;
+    
+    show_matrix("inverted covariance matrix", Map.covariance_matrix_inv, 20, 20, Map.show_output);
+    (err == EXIT_FAILURE) ? exit(err) : NULL;
                              
-    //show_matrix(Map.covariance_matrix_inv, 20, 20);
                 
     //outputMatrixCSV(Map.covariance_matrix_inv, "output_covMatrix_inv.csv", Map.input_data.length+1, Map.input_data.length+1);
                 
@@ -153,16 +151,19 @@ int main(int argc, char **argv){
                      Map.covariance_matrix_inv, 
                      Map.input_data.length+1, 
                      Map.input_data.length+1);*/
-                
+                 
     // Interpoliere nun das Raster:
-    interpolate_raster(&Map);
-                
+    err = interpolate_raster(&Map);
+    (err == EXIT_FAILURE) ? exit(err) : NULL;    
+    
+                  
     // Bestimme Metadaten des Ausgabeprodukts:
     get_output_information(&Map);
+
                 
     // Zeige Informationen zum Raster:
     show_map_info(&Map);
-                
+    exit(0);                
     if (Map.weights_correction){        
         outputRasterCSV(Map.raster, Map.config.output_dir, Map.config.output_datafile_cor, Map.rows, Map.cols);
     }

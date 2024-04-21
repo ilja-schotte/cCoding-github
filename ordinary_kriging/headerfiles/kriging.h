@@ -41,14 +41,14 @@ int get_max(int *values, int length);
 int get_min(int *values, int length);
 
 
-double *multiplyMatrixVector(double **matrix, double *vector_in, int rows, int cols);          
+int multiplyMatrixVector(double **matrix, double *vector_in, double *weights_vector, int rows, int cols);          
 double calc_distance(double latA, double lonA, double latB, double lonB);
 double calc_covariance(double distance, double sill, double nugget, double range);
 double calc_RSME(double *values1, double *values2, int length);
 double get_fmax(double *values, int length);
 double get_fmin(double *values, int length);
 int create_covariance_matrix(struct usr_map *Map);
-double **inverseOfMatrix(double **matrix, int rows, int cols);
+int create_inverted_covariance_matrix(struct usr_map *Map);
 int create_distance_matrix(struct usr_map *Map);
 double **create_fmatrix(int rows, int cols);
 double *create_fvector(int length);
@@ -58,7 +58,7 @@ void show_raster(struct usr_data_point **zgr, int *rows, int *cols);
 void show_map_info(struct usr_map *zgr);
 void show_input_data(struct usr_map *zgr);
 void show_variogram_data(struct usr_map *zgr);
-void show_matrix(double **matrix, int rows, int cols);
+int show_matrix(char *name, double **matrix, int rows, int cols, bool show_output);
 int check_matrix(double **matrix, int rows, int cols, bool show_output);
 void outputMatrixCSV(double **matrix, char *filename, int rows, int cols);
 int find_model_adjust_index(struct usr_map *Map, double *variogram_variances, int length);
@@ -723,7 +723,7 @@ int create_distance_matrix(struct usr_map *Map){
     */
     
     jmp_buf env;
-    int idx, kdx;
+    int idx, jdx;
     
     // ####################################### FUNCTION #############################################
     void create_matrix(struct usr_map *Map){     
@@ -742,23 +742,24 @@ int create_distance_matrix(struct usr_map *Map){
         else{
     
             for (idx=0; idx<Map->input_data.length; idx++){
-                for (kdx=0; kdx<Map->input_data.length; kdx++){
+                for (jdx=0; jdx<Map->input_data.length; jdx++){
             
                     // Is the difference between the longitude and latitude value smaler then EPS, the distance must be 0:
-                    if ((fabs(Map->input_data.data[idx].lat - Map->input_data.data[kdx].lat) < EPS) && 
-                        (fabs(Map->input_data.data[idx].lon - Map->input_data.data[kdx].lon) < EPS)){
+                    if ((fabs(Map->input_data.data[idx].lat - Map->input_data.data[jdx].lat) < EPS) && 
+                        (fabs(Map->input_data.data[idx].lon - Map->input_data.data[jdx].lon) < EPS)){
                 
-                        Map->distance_matrix[idx][kdx] = 0.0;
+                        Map->distance_matrix[idx][jdx] = 0.0;
                     }
                     else{
                         // calculate the distance between these points:                
-                        Map->distance_matrix[idx][kdx] = calc_distance(Map->input_data.data[idx].lat, 
+                        Map->distance_matrix[idx][jdx] = calc_distance(Map->input_data.data[idx].lat, 
                                                                        Map->input_data.data[idx].lon, 
-                                                                       Map->input_data.data[kdx].lat, 
-                                                                       Map->input_data.data[kdx].lon);
+                                                                       Map->input_data.data[jdx].lat, 
+                                                                       Map->input_data.data[jdx].lon);
                     }
                 }
             }
+            
             // output ?
             if (Map->show_output){
                 printf("ok!\n");
@@ -1302,17 +1303,16 @@ int create_covariance_matrix(struct usr_map *Map){
     // ####################################### FUNCTION #############################################    
     void create_matrix(struct usr_map *Map){   
 
-        double **covariance_matrix;
         double tmp;	 		// temporary value for checking purposes
 
         if (Map->show_output){
-            printf("Berechne die Kovarianzmatrix ... ");
+            printf("Calculate covariance matrix ... ");
             fflush(stdout);
         }
 
         // Reservieren der Kovarianzmatrix:   
-        covariance_matrix = create_fmatrix(Map->input_data.length+1, Map->input_data.length+1);
-        if (covariance_matrix == NULL){
+        Map->covariance_matrix = create_fmatrix(Map->input_data.length+1, Map->input_data.length+1);
+        if (Map->covariance_matrix == NULL){
             longjmp(env, 1);
         }
     
@@ -1324,22 +1324,23 @@ int create_covariance_matrix(struct usr_map *Map){
                 // ... so setze ihn auf 0:
                 if ((idx == (Map->input_data.length)) && (jdx == (Map->input_data.length))){
                 
-                    covariance_matrix[idx][jdx] = 0;
+                    Map->covariance_matrix[idx][jdx] = 0;
                     continue;
                     
                 }
+                
                 // Ist der zu berechnende Wert gleich der letzten Spalte, oder der letzten Zeile,
                 // ... so setze ihn auf 1:                
                 if ((idx == (Map->input_data.length)) || (jdx == (Map->input_data.length))){
                 
-                    covariance_matrix[idx][jdx] = 1;
+                    Map->covariance_matrix[idx][jdx] = 1;
                     continue;
                 }
                 else{
                     // Ist die Distanz 0 , dann entspricht die Kovarianz dem nugget-Wert:
-                    if (covariance_matrix[idx][jdx] < EPS){
+                    if (Map->distance_matrix[idx][jdx] < EPS){
                         
-                        covariance_matrix[idx][jdx] = Map->variogram.nugget;
+                        Map->covariance_matrix[idx][jdx] = Map->variogram.nugget;
                     }
                     else{
                         
@@ -1347,18 +1348,17 @@ int create_covariance_matrix(struct usr_map *Map){
                                               Map->variogram.sill, 
                                               Map->variogram.nugget,
                                               Map->variogram.range);
+                        
                         if ((isnan(tmp)) || (isinf(tmp))){
                             longjmp(env, 2);
                         }
                         else{
-                            covariance_matrix[idx][jdx] = tmp;
+                            Map->covariance_matrix[idx][jdx] = tmp;
                         }
                     }
                 }
             }
         }
-        
-        Map->covariance_matrix = covariance_matrix;
         
         if (Map->show_output){
             printf("ok!\n");
@@ -1378,94 +1378,108 @@ int create_covariance_matrix(struct usr_map *Map){
 // ##################################################################################################
 
 
-double **inverseOfMatrix(double **matrix, int rows, int cols){
+int create_inverted_covariance_matrix(struct usr_map *Map){
 
     /*
-        Berechnet die Inverse einer Matrix mit Hilfe des Gauß-Jordan Algorithmuses
+    
+        DESCRIPTION
+        Calculates the inverse of a matrix of type double by using Gauß-Jordan method.
         
-        Rückgabewert:
-        Erfolg: Doppelzeiger vom Datentyp "double" auf die Inversematrix der Dimensionen rows x cols.
-        Fehler: NULL
+        INPUT:
+        struct usr_map *Map	...	pointer to the map object
+        
+        OUTOUT:
+        on success:		...	EXIT_SUCCESS
+        on failure:		...	EXIT_FAILURE
+        
     */
 
     int idx, jdx, kdx;
-    double temp;
-    double **matrix_inv, **matrix_temp;
+    jmp_buf env;
+    
+    // ####################################### FUNCTION #############################################    
+    void create_matrix(struct usr_map *Map){    
+    
+    
+        double temp;
+        double **matrix_temp;		// temporary matrix for calculation purposes.
 
-    printf("Berechne die Inverse der Kovarianzmatrix ... ");
-    fflush(stdout);
+        if (Map->show_output){
+            printf("Calculating the inverted covariance-matrix ... ");
+            fflush(stdout);
+        }
 
-    matrix_inv = create_fmatrix(rows, cols);
-    matrix_temp = create_fmatrix(rows, cols);    
-    if ((matrix_inv == NULL) || (matrix_temp == NULL)){
-    
-        printf("Speicherfehler! Inverse Kovarianzmatrix.\n");
-        return NULL;
-    
-    }   
-    else{
-    
-        // Kopiere den Inhalt der Kovarianzmatrix in die temporäre Matrix:
-        for(idx=0; idx<rows; idx++){
-    				
-            for(jdx=0; jdx<cols; jdx++){
-            					
-	        matrix_temp[idx][jdx] = matrix[idx][jdx];
-	    }
-        } 
-    
+        Map->covariance_matrix_inv = create_fmatrix(Map->input_data.length+1, Map->input_data.length+1);
+        if (Map->covariance_matrix_inv == NULL){
+            longjmp(env, 1);
+        }
         
-        // Setze die Diagonale der Inversen auf 1, sonst 0:
-        for(idx=0; idx<rows; idx++){
-    				
-            for(jdx=0; jdx<cols; jdx++){								
-	
-	        if(idx == jdx){										
-	            matrix_inv[idx][jdx] = 1;
-	        }									
+        matrix_temp = create_fmatrix(Map->input_data.length+1, Map->input_data.length+1);
+        if (matrix_temp == NULL){
+            longjmp(env, 1);
+        }
+   
+        // Copy the content of the covariance matrix to the temporary matrix:
+        for(idx=0; idx<Map->input_data.length+1; idx++){
+            for(jdx=0; jdx<Map->input_data.length+1; jdx++){
+	        if ((isnan(Map->covariance_matrix[idx][jdx])) || (isinf(Map->covariance_matrix[idx][jdx]))){
+	            longjmp(env, 2);
+	        }
 	        else{
-	            matrix_inv[idx][jdx] = 0;
+	            matrix_temp[idx][jdx] = Map->covariance_matrix[idx][jdx];
 	        }
 	    }
         }
 
+        
+        // Set the diagonal values of the inverted matrix to 1 else leave it at 0:
+        for(idx=0; idx<Map->input_data.length+1; idx++){
+            Map->covariance_matrix_inv[idx][idx] = 1;
+        }
 
-        // 
-        for(kdx=0 ;kdx<rows; kdx++){
+
+        // finally perform some calculations
+        for(kdx=0 ;kdx<Map->input_data.length+1; kdx++){
     														
 	    temp=matrix_temp[kdx][kdx];
 											
-            for(jdx=0; jdx<cols; jdx++){
+            for(jdx=0; jdx<Map->input_data.length+1; jdx++){
         
 	        matrix_temp[kdx][jdx] /= temp;
-	        matrix_inv[kdx][jdx] /= temp;
+	        Map->covariance_matrix_inv[kdx][jdx] /= temp;
 	    }
 														
-	    for(idx=0; idx<rows; idx++){
+	    for(idx=0; idx<Map->input_data.length+1; idx++){
 	
 	        temp=matrix_temp[idx][kdx];
 	    									
-	        for(jdx=0; jdx<cols; jdx++){
+	        for(jdx=0; jdx<Map->input_data.length+1; jdx++){
 	    												
 		    if(idx == kdx){
 		        break;
 		    }									
 		    matrix_temp[idx][jdx] -= matrix_temp[kdx][jdx] * temp;
 								
-		    matrix_inv[idx][jdx] -= matrix_inv[kdx][jdx] * temp;
+		    Map->covariance_matrix_inv[idx][jdx] -= Map->covariance_matrix_inv[kdx][jdx] * temp;
 	        }
 	    }
         }
         
-        for(idx=0; idx<rows; idx++){
-    				
+        for(idx=0; idx<Map->input_data.length+1; idx++){
             free(matrix_temp[idx]);
-        }         
+        }
         free(matrix_temp);
         
-        
-        printf("ok\n");        
-        return matrix_inv;
+        if (Map->show_output){
+            printf("ok\n");
+        }
+    }
+    // ##############################################################################################
+    switch(setjmp(env)){
+        case 0: create_matrix(Map); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The covarinace matrix contains \"NAN\" and \"INF\" values\n", __FILE__, __LINE__); return EXIT_FAILURE;                
+        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
     }
 }
 
@@ -1478,104 +1492,158 @@ double **inverseOfMatrix(double **matrix, int rows, int cols){
 int interpolate_raster(struct usr_map *Map){
 
     /*
-        Berechnet für jeden Punkt des Kartenrasters der keinen Messwert besitzt 
-        einen Interpolationswert.
+    
+        DESCRIPTION:
+        Calculates for any point of the raster who has no value an interpolated value.
         
-        Rückgabewert:
-        Erfolg: True "1"
-        Fehler: False "0"
+        INPUT:
+        struct usr_map *Map	...	pointer to the map object.
+        
+        OUTPUT: (error code)
+        on success		...	EXIT_SUCCESS
+        on failure		...	EXIT_FAILURE
+        
     */
     
 
-    int idx, jdx, kdx, value_cnt=1;
-    double *cov_vector, *weights_vector;
-    double sum;
+    int idx, jdx, kdx;
+    jmp_buf env;
+    int err = EXIT_FAILURE;
     
-    cov_vector = create_fvector(Map->input_data.length+1);
-    if (cov_vector == NULL){
+    // ####################################### FUNCTION #############################################    
+    void interpolate(struct usr_map *Map){    
     
-        printf("Speicherfehler! Kovarianzvektor eines Rasterpunkts.\n");
-        return false;
     
-    }
-    else{
+        int value_cnt=1;
+        double *cov_vector, *weights_vector;
+        double sum;
+        double check_tmp;			// just for check purposes
     
-        printf("Interpoliere ...         ");
-        fflush(stdout);
+        cov_vector = create_fvector(Map->input_data.length+1);
+        if (cov_vector == NULL){
+            longjmp(env, 1);
+        }
         
-        // Geh über jeden Punkt des Input-Rasters:
+        weights_vector = create_fvector(Map->input_data.length+1);
+        if (weights_vector == NULL){
+            longjmp(env, 1);
+        }
+        
+        
+        if (Map->show_output){
+            printf("Interpoliere ...         ");
+            fflush(stdout);
+        }
+        
+        // Now go to every point of the raster step by step:
         for (idx=0; idx<(Map->rows); idx++){
             for (jdx=0; jdx<(Map->cols); jdx++){
         
-                
-                printf("\b\b\b\b\b\b\b\b\b");
-                fflush(stdout);                   
-                printf(" %5.1f %% ", ((value_cnt*1.0)/(Map->rows*Map->cols*1.0)*100.0));               
-                fflush(stdout);  
+                if (Map->show_output){
+                    printf("\b\b\b\b\b\b\b\b\b");
+                    fflush(stdout);                   
+                    printf(" %5.1f %% ", ((value_cnt*1.0)/(Map->rows*Map->cols*1.0)*100.0));               
+                    fflush(stdout);
+                } 
                 
                 value_cnt++;
                 
-                // Liegt kein Messwert für den Rasterpunkt vor...
+                // If there is no value at the raster then interpolate:
+                // default value for no value is -1
                 if (Map->raster[idx][jdx].value < 0){
             
                     sum = 0;
             
-                    // Berechne nun für diesen Punkt die Distanz zu jedem Messpunkt der Input-Daten.
+                    // calculate for this point the distance and then the covariance to any other point with a value on the raster.
                     for (kdx=0; kdx<Map->input_data.length+1; kdx++){
                 
                         if (kdx != Map->input_data.length){
-                            cov_vector[kdx] = calc_covariance(calc_distance(Map->raster[idx][jdx].lat,
-                                                                            Map->raster[idx][jdx].lon, 
-                                                                            Map->input_data.data[kdx].lat,
-                                                                            Map->input_data.data[kdx].lon),
-                                                                            Map->variogram.sill, 
-                                                                            Map->variogram.nugget,
-                                                                            Map->variogram.range);
+                        
+                            // calculate the distance:
+                            check_tmp = calc_distance(Map->raster[idx][jdx].lat,
+                                                      Map->raster[idx][jdx].lon, 
+                                                      Map->input_data.data[kdx].lat,
+                                                      Map->input_data.data[kdx].lon);
+                                                   
+                            // just check if the distance is nan or inf:                                                      
+                            if ((isnan(check_tmp)) || (isinf(check_tmp))){
+                                longjmp(env, 2);
+                            }
+                            else{
+                                // calculate the covariance
+                                check_tmp = calc_covariance(check_tmp,
+                                                            Map->variogram.sill, 
+                                                            Map->variogram.nugget,
+                                                            Map->variogram.range);
+                                                            
+                                // just check if the covariance is nan or inf:
+                                if ((isnan(check_tmp)) || (isinf(check_tmp))){
+                                    longjmp(env, 3);
+                                }
+                                else{
+                                    cov_vector[kdx] = check_tmp;
+                                }                  
+                            }  
                         }
                         else{
+                            // set the last value to 1:
                             cov_vector[kdx] = 1;
                         }
                     }
-                
-                    weights_vector = multiplyMatrixVector(Map->covariance_matrix_inv, 
-                                                          cov_vector, 
-                                                          Map->input_data.length+1, 
-                                                          Map->input_data.length+1);
-                                                          
-                   
+                    
+                    // now multiply the individual covarinance vector with the inverted covariance matrix:
+                    err = multiplyMatrixVector(Map->covariance_matrix_inv, 
+                                               cov_vector,
+                                               weights_vector,
+                                               Map->input_data.length+1, 
+                                               Map->input_data.length+1);
+                    (err == EXIT_FAILURE) ? longjmp(env, 4) : NULL;
+                      
                                                           
                     if (Map->weights_correction){
-                    
-                        correct_negative_weights(weights_vector, cov_vector, Map->input_data.length);
+                        
+                        // correct negative weights:
+                        err = correct_negative_weights(weights_vector, cov_vector, Map->input_data.length);
+                        (err == EXIT_FAILURE) ? longjmp(env, 5) : NULL;
                     }
                     
                     // Wert des Rasterpunktes mit 0 initialisieren:
                     Map->raster[idx][jdx].value = 0;
                     
-                    // Berechnen des Interpolationswertes, als die Summe über die Gewichte * Werte.
+                    // Calculate the interpolated value, as the sum of the weighted precipitation values.
                     for (kdx=0; kdx<Map->input_data.length; kdx++){
                     
                         sum += (weights_vector[kdx] * Map->input_data.data[kdx].value);
                     }
                     
-                    // Interpolierten Wert dem Rasterpunkt zuweisen:
+                    // assign value to raster
                     Map->raster[idx][jdx].value = sum;
                     
                 }
                 else{
-                    // Liegt ein Messwert vor, so geh zum nächsten Rasterpunkt
+                    // is there a value skip that point.
                     continue;
             
                 }   
             }    
         }
+        if (Map->show_output){
+            printf("ok\n");
+        }
         
-        printf("ok\n");
         free(cov_vector);
         free(weights_vector);
-        return true;
-    }   
-
+    }
+    // ##############################################################################################
+    switch(setjmp(env)){
+        case 0: interpolate(Map); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The calculated distance is \"NAN\" or \"INF\"\n", __FILE__, __LINE__); return EXIT_FAILURE;
+        case 3: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The calculated covariance is \"NAN\" or \"INF\"\n", __FILE__, __LINE__); return EXIT_FAILURE; 
+        case 4: fprintf(stderr, "\nERROR: %s --> %d:\n >>> Calculation of weights returned an error!\n", __FILE__, __LINE__); return EXIT_FAILURE;
+        case 5: fprintf(stderr, "\nERROR: %s --> %d:\n >>> Correction of negative weights returned an error!\n", __FILE__, __LINE__); return EXIT_FAILURE;                              
+        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    }  
 };
 
 
@@ -1587,106 +1655,118 @@ int interpolate_raster(struct usr_map *Map){
 int correct_negative_weights(double *weights_vector, double *cov_vector, int length){
 
     /*
-        Setzt negative Gewichtungen des Gewichtungsvektors auf 0.
-        Führt anschließend eine Restandardisierung durch um die Summe aller pos. Gewichte 
-        anschließend wieder auf 1 zu bringen.
+    
+        DESCRIPTION:
+        Sets negative weights to 0.
+        Performs subsequently a restandardization to get the sum of all posiitive weights to 1.
         
-        Rückgabewert:
-        Erfolg: True "1"
+        INPUT:
+        double *weights_vector		...	pointer to the weights vector to correctify.
+        double *cov_vector		...	pointer to the covariance vector.
+        int length			...	length of these vectors.
+        
+        OUTPUT: (error code)
+        on success			...	EXIT_SUCCESS
+        on failure			...	EXIT_FAILURE
     
     */
 
+    int idx;
+    jmp_buf env;
 
 
-    int idx, cnt=0;
-    double sum_weights=0, sum_cov=0;
-    double absAvg_negWeights=0;				// absolten Durchschnittswertes aller negativen Gewichte
-    double avgCov_negWeights=0;				// durchschnittl.
+    // ####################################### FUNCTION #############################################    
+    void correct(double *weights_vector, double *cov_vector, int length){ 
+
+        int cnt=0;
+        double sum_weights=0;					// sum of all weights
+        double sum_cov=0;					// sum of all covariances
+        double absAvg_negWeights=0;				// absolute average of negative weights
+        double avgCov_negWeights=0;				// average of neg. covariances
     
 
-    // 1. Berechne den absoluten Durchschnittswert der negativen Abweichungen (absAvg_negWeights) über den "weights_vector"
-    //    lam_avg_neg = sum(|-lam_0|, |-lam_1|, ... , |-lam_n|)/n
-    
-    // 2. Berechne die durschnittl. Kovarianz zwischen dem Interpolationspunkt und den Messpunkten mit neg. Gewichten:
-    //    cov_avg_neg = sum(cov(u - ui))/n
-    //    d.h. 2.1. Berechne die Distanz zwischen dem zu interpolierenden Punkt und den Messpunkten mit neg. Gewichten
-    //         2.2. Berechne aus diesen Abständen die Kovarianz und bilde davon den Mittelwert 
-    for (idx=0; idx<length; idx++){
-    
-        if (weights_vector[idx] < 0){
-            
-            // Bilde die Summe der absoluten neg. Gewichtungen:
-            sum_weights += fabs(weights_vector[idx]);
-            
-            // Bilde die Summe der Kovarianzen bei neg. Gewichtung:
-            sum_cov += cov_vector[idx];
-            
-            // Erhöhe den Counter für die Anzahl der neg. Gewichtungen
-            cnt++;
-        }
-    }
-    // Sind keine neg. Gewichte vorhanden, müss alle Gewichtungen größer sein als absAvg_negWeights, da...
-    // absAvg_negWeights = 0 und und alle Gewichtung > 0    
-    if (cnt == 0){
-    
-        return true;
-    }
-    // Berechne den absoluten Durchschnittswert der negativen Abweichungen nur, wenn min. 1 negativer Wert vorhanden war:
-    else{
-        
-        absAvg_negWeights = (sum_weights/cnt);
-        avgCov_negWeights = (sum_cov/cnt);
-        
-        // 3. Korrigiere die Gewichte nun folgendermaßen:
-        //   1. neue Gewichtung = alte Gewichtung
-        //   2. if alte Gewichtung < 0 dann neue Gewichtung = 0
-        //   3. if (alte Gewichtung > 0) && 
-        //         (Kovarianz zwischen zu interpolierenden Punkt und Messwert < cov_avg_neg) && 
-        //         (alte Gewichtung < absAvg_negWeights) dann lam_new = 0       
-        
-        sum_weights = 0;
-        
+ 
         for (idx=0; idx<length; idx++){
     
-            // Ist die Gewichtung < 0, dann setzte es 0:
+            // if the weight is negative...
             if (weights_vector[idx] < 0){
-                weights_vector[idx] = 0;
-            }
-            // Ist die Gewichtung > 0, aber ...
-            else if ((weights_vector[idx] > 0) && 
-                     (cov_vector[idx] < avgCov_negWeights) && 
-                     (weights_vector[idx] < absAvg_negWeights)){
-                
-                weights_vector[idx] = 0;            
-            }
-            else{
-                // Wird die Gewichtung nicht auf 0 gesetzt, so summiere den Wert auf:
-                sum_weights += weights_vector[idx];
+            
+                // Calculate the absolute sum of these negative weights:
+                sum_weights += fabs(weights_vector[idx]);
+            
+                // calculate the sum of the corresponding covariances
+                sum_cov += cov_vector[idx];
+            
+                // raise the counter for the number of negative weights
+                cnt++;
             }
         }
-        
-        // Ist die Summe der pos. Gewichtungen > 0, ...
-        // sprich: Es wurden nicht alle Gewichtungen auf 0 gesetzt, dann ...
-        if (sum_weights > 0){
+        // end this function if there are no negative weights.   
+        if (cnt == 0){
     
-            // ... Restandardisiere die Gewichte:
+            return;
+        }
+        else{
+            // Calculate the average of the sum of neg. weights and covariances
+            absAvg_negWeights = (sum_weights/cnt);
+            avgCov_negWeights = (sum_cov/cnt);
+            
+            if ((isnan(absAvg_negWeights)) || (isinf(absAvg_negWeights)) || 
+                (isnan(avgCov_negWeights)) || (isinf(avgCov_negWeights))){
+            
+                longjmp(env, 1);   
+            }      
+        
+            sum_weights = 0;
+        
             for (idx=0; idx<length; idx++){
     
-                // Es sollen nur die positiven Gewichtungen restandardisiert werden.
-                // Der Rest bleibt 0:
-                if (weights_vector[idx] > 0){
-
-                    weights_vector[idx] = weights_vector[idx] / sum_weights;
+                // is the weight < 0, so set it to 0:
+                if (weights_vector[idx] < 0){
+                    weights_vector[idx] = 0;
+                }
+                // is the weight > 0 and the covariance < avgCov_negWeights and the weight < absAvg_negWeights ...
+                else if ((weights_vector[idx] > 0) && 
+                         (cov_vector[idx] < avgCov_negWeights) && 
+                         (weights_vector[idx] < absAvg_negWeights)){
+                
+                    // set the weight to 0 ...
+                    weights_vector[idx] = 0;            
                 }
                 else{
-                    weights_vector[idx] = 0;
+                    // is the weight not set to 0, than sum up this value
+                    sum_weights += weights_vector[idx];
+                }
+            }
+        
+            // is the sum of weights > 0, ...
+            if (sum_weights > 0){
+    
+                // ... restandardize the weights:
+                for (idx=0; idx<length; idx++){
+    
+                    // but only the positive weights.
+                    // the rest remains at 0
+                    if (weights_vector[idx] > 0){
+
+                        weights_vector[idx] = weights_vector[idx] / sum_weights;
+                    }
+                    else{
+                        weights_vector[idx] = 0;
+                    }
                 }
             }
         }
-        return true;
     }
+    // ##############################################################################################
+    switch(setjmp(env)){
+        case 0: correct(weights_vector, cov_vector, length); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The averages of the negative weights or covariances are \"NAN\" or \"INF\"!\n", __FILE__, __LINE__); return EXIT_FAILURE;
+        case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;               
+        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    }    
+    
 }
-
 
 
 // ##################################################################################################
@@ -1696,22 +1776,50 @@ int correct_negative_weights(double *weights_vector, double *cov_vector, int len
 double calc_distance(double latA, double lonA, double latB, double lonB){
 
     /*
-        Berechnet die Entfernung zwischen 2 Punkten auf einer Kugelfläche mit einem Radius von 6365.265 km.
-        Der Radius entspricht dem Erdradius auf 51° N.
-        Die Input-Argumente muessen in Dezimalgrad vorliegen.
+        DESCRIPTION:
+        Calculates the distance between 2 point on a sphere with the radius of the earth at 51°N.
+        
+        INPUT:
+        double latA	...	latitude of point A in decimal degree.
+        double lonA	...	longitude of point A in decimal degree.
+        double latB	...	latitude of point B in decimal degree.
+        double lonB	...	longitude of point B in decimal degree.
+        
+        OUTPUT:
+        on success	...	distance between the two points in km
+        on failure	...	NAN
     */ 
     
+    jmp_buf env;
     
-    // Punkt A: 
-    double latA_rad = (latA/180.0) * M_PI;
-    double lonA_rad = (lonA/180.0) * M_PI;
+    // ####################################### FUNCTION #############################################   
+    double calc(double latA, double lonA, double latB, double lonB){
+        
+        if ((isnan(latA)) || (isnan(lonA)) || (isnan(latB)) || (isnan(lonB)) ||
+            (isinf(latA)) || (isinf(lonA)) || (isinf(latB)) || (isinf(lonB))){
+        
+            longjmp(env, 1);
+        }
+        
+        
+        // point A: 
+        double latA_rad = (latA/180.0) * M_PI;
+        double lonA_rad = (lonA/180.0) * M_PI;
 
-    // Punkt B:
-    double latB_rad = (latB/180.0) * M_PI;
-    double lonB_rad = (lonB/180.0) * M_PI;
+        // point B:
+        double latB_rad = (latB/180.0) * M_PI;
+        double lonB_rad = (lonB/180.0) * M_PI;
 
-    return RADIUS_EARTH * acos( (sin(latA_rad) * sin(latB_rad) ) + ( cos(latA_rad) * cos(latB_rad) * ( cos(lonB_rad - lonA_rad) ) ) );
-
+        return RADIUS_EARTH * acos( (sin(latA_rad) * sin(latB_rad) ) + ( cos(latA_rad) * cos(latB_rad) * ( cos(lonB_rad - lonA_rad) ) ) );
+    }
+    // ##############################################################################################
+    switch(setjmp(env)){
+        case 0: return calc(latA, lonA, latB, lonB);
+        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> One of the coordinates is equal to \"NAN\" or \"INF\"\n", __FILE__, __LINE__); return NAN;                       
+        case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return NAN;               
+        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+    }     
+    
 }
 
 
@@ -1723,23 +1831,42 @@ double calc_distance(double latA, double lonA, double latB, double lonB){
 double calc_covariance(double distance, double sill, double nugget, double range){
 
     /*
-        Berechnet die Kovarianz eines Punktes mittels gewähltem Variogrammmodell,
-        der Distanz, sill, nugget und range.
+        DESCRIPTION:
+        Calculates the covariance of any point by unsing the determined variogram model,
+        the distance, sill, nugget and range.
         
-        Rückgabewert:
-        Erfolg: Kovarianz vom Datentyp "double"
+        INPUT:
+        double distance
+        double sill
+        double nugget
+        double range
+        
+        OUTPUT:
+        on success	...	covariance 
+        on failure	...	NAN
     */
     
-    double z, n;
+    jmp_buf env;
     
-    // Exponentielles Modell:
-    // nugget + sill *(1-exp(-|distance|/(range/3)))
+    // ####################################### FUNCTION #############################################    
+    double calc(double distance, double sill, double nugget, double range){     
     
-    n = range / 3.0;
-    z = -1 * abs(distance);
+        double z, n;
     
-    return nugget + sill * (1 - exp(z/n));
-
+        // exponetial model:
+        // nugget + sill *(1-exp(-|distance|/(range/3)))
+    
+        n = range / 3.0;		// 
+        z = -1 * abs(distance);		// distance must be negative
+    
+        return nugget + sill * (1 - exp(z/n));
+    }
+    // ##############################################################################################
+    switch(setjmp(env)){
+        case 0: return calc(distance, sill, nugget, range);
+        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return NAN;                
+        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+    }    
 
 }
 
@@ -1749,31 +1876,55 @@ double calc_covariance(double distance, double sill, double nugget, double range
 
 
 
-double *multiplyMatrixVector(double **matrix, double *vector_in, int rows, int cols){
+int multiplyMatrixVector(double **matrix, double *vector_in, double *vector_out, int rows, int cols){
 
     /*
-        Multipliziert eine Matrize vom Datentyp "double" mit einem Vektor vom Datentyp "double".
+    
+        DESCRIPTION:
+        Multiplies a matrix of type double with a vector of type double.
         
-        Rückgabewert:
-        Erfolg: Zeiger vom Datentyp "double" auf das Feld [0][0] des Ergebnisvektors.
-        Fehler: False
+        INPUT:
+        double **matrix		...	pointer to the matrix you want to multiply with a vector.
+        double *vector_in	...	pointer to the vector you want to multiply with a matrix.
+        double *weights_vector	...	pointer to the result vector.
+        int rows		...	number of rows of the matrix
+        int cols		...	number ot columns of the matrix.
+        
+        OUTPUT: (error code)
+        on success		...	EXIT_SUCCESS
+        on failure		...	EXIT_FAILURE
+        
     */
 
-    int idx, jdx, kdx;
+    int idx, jdx;
+    jmp_buf env;
+    
+    // ####################################### FUNCTION #############################################    
+    double multiply(double **matrix, double *vector_in, double *vector_out, int rows, int cols){
 
-    double *vector_out;
-    double sum=0;
-    
-    // Reserviere den Ergebnisvektor:
-    vector_out = create_fvector(rows);
-    if (vector_out == NULL){
-    
-        printf("Speicherfehler!\n");
-        return NULL;
-    }
-    else{
+        double sum=0;
+
+        if (rows != cols){
+            longjmp(env, 1);
+        }
+   
+        // check for nan and inf in vector
+        for (idx=0; idx<rows; idx++){
+            if ((isnan(vector_in[idx])) || (isinf(vector_in[idx]))){
+                longjmp(env, 2);
+            }
+        }
         
-        // Multiplikation:
+        // check for nan and inf in matrix
+        for (idx=0; idx<rows; idx++){
+            for (jdx=0; jdx<cols; jdx++){
+                if ((isnan(matrix[idx][jdx])) || (isinf(matrix[idx][jdx]))){
+                    longjmp(env, 3);
+                }
+            }
+        }
+   
+        // multipy:
         for (idx=0; idx<rows; idx++){
                     
             vector_out[idx] = 0;
@@ -1781,13 +1932,17 @@ double *multiplyMatrixVector(double **matrix, double *vector_in, int rows, int c
             for (jdx=0; jdx<cols; jdx++){
                 
                 vector_out[idx] += (matrix[idx][jdx] * vector_in[jdx]);
-                    
             }
-            
-        }
-        
-        return vector_out;
+        }        
     }
+    // ##############################################################################################
+    switch(setjmp(env)){
+        case 0: multiply(matrix, vector_in, vector_out, rows, cols); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The number of columns of the matrix must be equal to number of rows of the vector\n", __FILE__, __LINE__); return EXIT_FAILURE;
+        case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> Input vector contains \"NAN\" or \"INF\" values!\n", __FILE__, __LINE__); return EXIT_FAILURE; 
+        case 3: fprintf(stderr, "\nERROR: %s --> %d:\n >>> Input matrix contains \"NAN\" or \"INF\" values!\n", __FILE__, __LINE__); return EXIT_FAILURE;                                
+        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    }         
 }
 
 
@@ -1837,8 +1992,6 @@ int multiplyMatrix(double **matrixA, double **matrixB, int rows, int cols){
             }
         }
                         
-        
-        //show_matrix(matrixP, 20, 20);
         
         for (idx=0; idx<rows; idx++){
         
@@ -1895,9 +2048,9 @@ double calc_RSME(double *values1, double *values2, int length){
 
     switch(setjmp(env)){
         case 0: return rsme(values1, values2, length);
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); return NAN;
-        case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> The datasets contains NAN or INF values!\n", __FILE__, __LINE__); return NAN;        
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); return NAN;
+        case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The datasets contains NAN or INF values!\n", __FILE__, __LINE__); return NAN;        
+        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
     }
 }
 
@@ -2290,10 +2443,20 @@ int check_matrix(double **matrix, int rows, int cols, bool show_output){
                     
                     continue;
                 }
-                else if (matrix[idx][jdx] > 0){
+                else if (matrix[idx][jdx] >= 0){
                 
                     // count the pos. value
                     cnt_pos++;
+                    
+                    // check if the current value is higher then the current maximum
+                    if (matrix[idx][jdx] > max){
+                        max=matrix[idx][jdx];
+                    }
+                    
+                    // check if the current value is lower then the current minimum                  
+                    if (matrix[idx][jdx] < min){
+                        min=matrix[idx][jdx];
+                    }                    
                     continue;
                 }
             }
@@ -2426,25 +2589,62 @@ void show_map_info(struct usr_map *Map){
 
 
 
-void show_matrix(double **matrix, int rows, int cols){
+int show_matrix(char *name, double **matrix, int rows, int cols, bool show_output){
 
     /*
-        Gibt die übergebene Matrix auf stdout aus.    
-    */
-
-    int idx, jdx;
-
-    for (idx=0; idx<rows; idx++){
     
-        for (jdx=0; jdx<cols; jdx++){
+        DESCRIPTION:
+        Returns the matrix of type double on stdout within the defined limits.
         
-            printf("%8.3f", matrix[idx][jdx]);   
         
+        INPUT:
+        double **matrix		...	pointer to the matrix to show
+        int rows		...	rows to show
+        int cols		...	columns to show
+        
+        OUTPUT: (error code)
+        on success		...	EXIT_SUCCESS
+        on failure		...	EXIT_FAILURE
+        
+    */
+    
+    
+   
+    int idx, jdx;
+    jmp_buf env;
+    
+    
+    
+    // ####################################### FUNCTION #############################################    
+    double show(double **matrix, int rows, int cols){ 
+    
+        if ((rows <= 0) || (cols <= 0)){
+            longjmp(env, 1);
         }
         
-        printf("\n");
+        if (show_output){
+            printf("%s\n", name);
+    
+            for (idx=0; idx<rows; idx++){
+    
+                for (jdx=0; jdx<cols; jdx++){
+        
+                    printf("%8.3f", matrix[idx][jdx]);   
+        
+                }
+        
+                printf("\n");
+            }
+            printf("\n");
+        }
     }
-    printf("\n");
+    // ##############################################################################################
+
+    switch(setjmp(env)){
+        case 0: show(matrix, rows, cols); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> The given number of rows and columns are lower/equal to 0!\n", __FILE__, __LINE__); return EXIT_FAILURE;                
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    }    
 }
 
 
