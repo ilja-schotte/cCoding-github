@@ -26,45 +26,39 @@ int set_config(struct usr_map *Map, int argc, char **argv);							// reads the a
 														// ... and performs calculation regarding to the resolution
 
 
-int fill_raster_with_default_data(struct usr_map *zgr);
-int input_csv_data(struct usr_map *zgr, char *input_datafile);
-int fill_raster_with_input_data(struct usr_map *zgr);
-int create_variogram(struct usr_map *zgr);
-int interpolate_raster(struct usr_map *zgr);
-int multiplyMatrix(double **matrixA, double **matrixB, int rows, int cols);
+int fill_raster_with_default_data(struct usr_map *Map);
+int input_csv_data(struct usr_map *Map, char *input_datafile);
+int fill_raster_with_input_data(struct usr_map *Map);
+int create_variogram(struct usr_map *Map);
+int interpolate_raster(struct usr_map *Map);
 int correct_negative_weights(double *weights_vector, double *cov_vector, int length);
-int outputRasterCSV(struct usr_data_point **raster, char *output_dir, char *filename, int rows, int cols);
+int outputRasterCSV(struct usr_data_point **raster, char *output_dir, char *filename, int rows, int cols, bool show_output);
 int get_output_information(struct usr_map *Map);
-int get_variogram_model(struct usr_map *zgr);
+int get_variogram_model(struct usr_map *Map);
 int *create_vector(int length);
-int get_max(int *values, int length);
-int get_min(int *values, int length);
-
-
-int multiplyMatrixVector(double **matrix, double *vector_in, double *weights_vector, int rows, int cols);          
-double calc_distance(double latA, double lonA, double latB, double lonB);
-double calc_covariance(double distance, double sill, double nugget, double range);
-double calc_RSME(double *values1, double *values2, int length);
-double get_fmax(double *values, int length);
-double get_fmin(double *values, int length);
+int get_dvector_max(int *values, int length);
+int get_dvector_min(int *values, int length);
+int show_map_info(struct usr_map *Map);
+int show_input_data(struct usr_map *Map);
+int show_variogram_data(struct usr_map *Map);
+int show_matrix(char *name, double **matrix, int rows, int cols, bool show_output);
+int check_matrix(double **matrix, int rows, int cols, bool show_output);
 int create_covariance_matrix(struct usr_map *Map);
 int create_inverted_covariance_matrix(struct usr_map *Map);
 int create_distance_matrix(struct usr_map *Map);
+int multiplyMatrixVector(double **matrix, double *vector_in, double *weights_vector, int rows, int cols);
+int find_model_adjust_index(struct usr_map *Map, double *variogram_variances, int length);
+      
+double calc_distance(double latA, double lonA, double latB, double lonB);
+double calc_covariance(double distance, double sill, double nugget, double range);
+double calc_RSME(double *values1, double *values2, int length);
+double get_fvector_max(double *values, int length);
+double get_fvector_min(double *values, int length);
 double **create_fmatrix(int rows, int cols);
 double *create_fvector(int length);
 
-               
-void show_raster(struct usr_data_point **zgr, int *rows, int *cols);
-void show_map_info(struct usr_map *zgr);
-void show_input_data(struct usr_map *zgr);
-void show_variogram_data(struct usr_map *zgr);
-int show_matrix(char *name, double **matrix, int rows, int cols, bool show_output);
-int check_matrix(double **matrix, int rows, int cols, bool show_output);
-void outputMatrixCSV(double **matrix, char *filename, int rows, int cols);
-int find_model_adjust_index(struct usr_map *Map, double *variogram_variances, int length);
-
-void free_raster(struct usr_map *zgr);
-void free_vector(struct usr_map *zgr);
+void free_raster(struct usr_map *Map);
+void free_vector(struct usr_map *Map);
 
 
 // ##################################################################################################
@@ -167,7 +161,12 @@ int set_config(struct usr_map *Map, int argc, char **argv){
             // show output during calculations?
             if (!strcmp(argv[idx],"-o")){
                 Map->show_output = true;
-            }            
+            }
+            
+            if ((!strcmp(argv[idx],"-co")) || (!strcmp(argv[idx],"-oc"))){
+                Map->show_output = true;
+                Map->weights_correction = true;
+            }                     
         }
     
         // check rows to be greater then 0;
@@ -467,44 +466,55 @@ int input_csv_data(struct usr_map *Map, char *input_datafile){
 double **create_fmatrix(int rows, int cols){
 
     /*
-        Erstellt eine 2D-Matrix vom Datentyp "double" der Dimensionen rows x cols.
+        DESCRIPTION:
+        Allocates memory for a matrix of type double with the dimensions of rows x cols.
         
-        Rückgabewert: 
-        Erfolg: Ein Doppelzeiger des Datentyps "double" auf das Feld [0][0] der 2D-Matrix.
-        Fehler: NULL.        
+        INPUT:
+        int rows	...	number of rows.
+        int cols	...	number of columns.
+        
+        OUTPUT:
+        on success	...	pointer of type double to this matrix.
+        on failure	...	NULL       
     */
 
-    int idx;
-    double **zgr;
+    int idx, jdx;
+    jmp_buf env;
+    
+    // ####################################### FUNCTION #############################################
+    double **allocate(int rows, int cols){    
     
     
-    zgr = (double **) calloc(rows, sizeof(double*));
-    if (zgr == NULL){
+        double **zgr;
     
-        printf("Speicherfehler!\n");
-        printf("Beim Reservieren einer Zeigerzeile von Datentyp: \"double\" ist ein Fehler aufgetreten!\n");
-        printf("Funktion: **create_fmatrix\n");
-        printf("Rueckgabe: NULL\n"); 
-                 
-        return NULL;
-    }
-    else{       
+        zgr = (double **) calloc(rows, sizeof(double*));
+        if (zgr == NULL){
+            longjmp(env, 1);
+        }  
         for (idx=0; idx<rows; idx++){
         
-            zgr[idx] = (double *) calloc(cols, sizeof(double));        
+            zgr[idx] = (double *) calloc(cols, sizeof(double));
             if (zgr[idx] == NULL){
             
-                printf("Speicherfehler!\n");
-                printf("Beim Reservieren einer Spalte von Datentyp \"double\" ist ein Fehler aufgetreten!\n");
-                printf("Funktion: **create_fmatrix\n");
-                printf("Rueckgabe: NULL\n");            
-            
-                return NULL;
-            
+                // clean up
+                for (jdx=0; jdx<idx; jdx++){
+                    free(zgr[jdx]);
+                }
+                free(zgr);
+                
+                longjmp(env, 1);
             }
         }
         return zgr;
-    }  
+    }
+    // ##############################################################################################
+
+    switch(setjmp(env)){
+        case 0: return allocate(rows, cols);
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return NULL;
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NULL;
+    }     
+    
 }
 
 
@@ -1185,9 +1195,8 @@ int get_variogram_model(struct usr_map *Map){
 }
 
 
-
 // ##################################################################################################
-
+// ##################################################################################################
 
 
 int find_model_adjust_index(struct usr_map *Map, double *variogram_variances, int length){
@@ -1231,7 +1240,7 @@ int find_model_adjust_index(struct usr_map *Map, double *variogram_variances, in
         }
     
         // gives you the maximum value of the semivariance vector
-        y_max = get_fmax(variogram_variances, Map->variogram.numClasses);
+        y_max = get_fvector_max(variogram_variances, Map->variogram.numClasses);
     
         // Calculates the width of an interval out of the maximum value and the number of intervals
         interval = y_max/Map->variogram.numClasses;
@@ -1252,7 +1261,7 @@ int find_model_adjust_index(struct usr_map *Map, double *variogram_variances, in
         // take the first occurence
         for (idx=0; idx<Map->variogram.numClasses; idx++){
         
-            if (density_variances[idx] == get_max(density_variances, Map->variogram.numClasses)){
+            if (density_variances[idx] == get_dvector_max(density_variances, Map->variogram.numClasses)){
                 
                 imax = idx;
             }
@@ -1277,9 +1286,8 @@ int find_model_adjust_index(struct usr_map *Map, double *variogram_variances, in
 }
 
 
-
 // ##################################################################################################
-
+// ##################################################################################################
 
 
 int create_covariance_matrix(struct usr_map *Map){
@@ -1375,6 +1383,7 @@ int create_covariance_matrix(struct usr_map *Map){
 }
 
 
+// ##################################################################################################
 // ##################################################################################################
 
 
@@ -1484,9 +1493,8 @@ int create_inverted_covariance_matrix(struct usr_map *Map){
 }
 
 
-
 // ##################################################################################################
-
+// ##################################################################################################
 
 
 int interpolate_raster(struct usr_map *Map){
@@ -1647,9 +1655,8 @@ int interpolate_raster(struct usr_map *Map){
 };
 
 
-
 // ##################################################################################################
-
+// ##################################################################################################
 
 
 int correct_negative_weights(double *weights_vector, double *cov_vector, int length){
@@ -1770,7 +1777,7 @@ int correct_negative_weights(double *weights_vector, double *cov_vector, int len
 
 
 // ##################################################################################################
-
+// ##################################################################################################
 
 
 double calc_distance(double latA, double lonA, double latB, double lonB){
@@ -1823,9 +1830,8 @@ double calc_distance(double latA, double lonA, double latB, double lonB){
 }
 
 
-
 // ##################################################################################################
-
+// ##################################################################################################
 
 
 double calc_covariance(double distance, double sill, double nugget, double range){
@@ -1836,10 +1842,10 @@ double calc_covariance(double distance, double sill, double nugget, double range
         the distance, sill, nugget and range.
         
         INPUT:
-        double distance
-        double sill
-        double nugget
-        double range
+        double distance	...	distance between two points
+        double sill	...	sill of the variogram model
+        double nugget	...	nugget of the variogram model
+        double range	...	range of the variogram model
         
         OUTPUT:
         on success	...	covariance 
@@ -1871,7 +1877,7 @@ double calc_covariance(double distance, double sill, double nugget, double range
 }
 
 
-
+// ##################################################################################################
 // ##################################################################################################
 
 
@@ -1946,64 +1952,8 @@ int multiplyMatrixVector(double **matrix, double *vector_in, double *vector_out,
 }
 
 
-
 // ##################################################################################################
-
-
-
-int multiplyMatrix(double **matrixA, double **matrixB, int rows, int cols){
-
-    /*
-        Multipliziert zwei Matrizen vom Typ "double" und der Dimensionen rows x cols miteinander.
-        
-        Rückgabewert:
-        Erfolg: True "1"
-        Fehler: False "0"
-    */
-
-
-    int idx, jdx, kdx;
-    
-    double **matrixP;
-    double sum=0;
-    
-    
-    
-    matrixP = create_fmatrix(rows, cols);
-    if (matrixP == NULL){
-    
-        printf("Speicherfehler!\n");
-        return false;
-    }
-    else{
-        
-        // Multiplikation:
-        for (idx=0; idx<rows; idx++){
-        
-            for (jdx=0; jdx<cols; jdx++){
-            
-                matrixP[idx][jdx] = 0;
-                
-                for (kdx=0; kdx<cols; kdx++){
-                
-                    matrixP[idx][jdx] += (matrixB[kdx][jdx] * matrixA[idx][kdx]);
-                    
-                }
-            }
-        }
-                        
-        
-        for (idx=0; idx<rows; idx++){
-        
-            free(matrixP[idx]);
-        
-        }
-        
-        free(matrixP);
-        return true;
-    }   
-}
-
+// ##################################################################################################
 
 
 double calc_RSME(double *values1, double *values2, int length){
@@ -2054,250 +2004,333 @@ double calc_RSME(double *values1, double *values2, int length){
     }
 }
 
-double get_fmax(double *values, int length){
+
+// ##################################################################################################
+// ##################################################################################################
+
+
+double get_fvector_max(double *values, int length){
 
     /*
-        Return the maximum value of a given vector.
+    
+        DESCRIPTION:
+        Determines the maximum value of a vector of type double and length "length".
+        
+        INPUT:
+        double *values	...	pointer to the vector of doubles.
+        int length	...	length of the vector.
+        
+        OUTPUT:
+        on success	...	maximum value of that vector
+        on failure	...	NAN
+        
     */
+
     
     int idx;
+    jmp_buf env;
     
-    double maxValue = values[0];
-    
-    
-    for (idx=0; idx<length; idx++){
-    
-        if (values[idx] > maxValue){
-            
-            maxValue = values[idx];
-        }
-    }
-    
-    return maxValue;
-}
-
-
-int get_max(int *values, int length){
-
-    /*
-        Bestimmt den Maximaumwert einer Datenreihe des Typ "integer".
-    */
-    
-    int idx;
-    
-    int maxValue = values[0];
-    
-    
-    for (idx=0; idx<length; idx++){
-    
-        if (values[idx] > maxValue){
-            
-            maxValue = values[idx];
-        }
-    }
-    
-    return maxValue;
-}
-
-
-
-double get_fmin(double *values, int length){
-
-    /*
-        Bestimmt den Maximaumwert einer Datenreihe.
-    */
-    
-    int idx;
-    
-    double minValue = values[0];
-    
-    
-    for (idx=0; idx<length; idx++){
-    
-        if (values[idx] < minValue){
+    // ####################################### FUNCTION #############################################    
+    double maximum(double *values, int length){ 
         
-            minValue = values[idx];
-        }
-    }
-    return minValue;
-    
-}
-
-
-int get_min(int *values, int length){
-
-    /*
-        Bestimmt den Maximaumwert einer Datenreihe.
-    */
-    
-    int idx;
-    
-    int minValue = values[0];
+        double maxValue = values[0];
     
     
-    for (idx=0; idx<length; idx++){
+        for (idx=0; idx<length; idx++){
     
-        if (values[idx] < minValue){
+            if (values[idx] > maxValue){
         
-            minValue = values[idx];
-        }
-    }
-    return minValue;
-    
-}
-
-
-void outputMatrixCSV(double **matrix, char *filename, int rows, int cols){
-
-    /*
-        Gibt eine Matrix vom Datentyp "double" als csv-Datei aus.
-        
-        Rückgabewert:
-        Erfolg: True "1"
-        Fehler: False "0"
-    
-    */
-
-    int idx, jdx, kdx;
-    char zahlText[20];
-    FILE *fp;
-
-
-    fp = fopen(filename,"w");
-    if (fp == NULL){
-    
-        printf("Dateifehler! Matrix (output)\n");
-    }
-    else{
-    
-        for (idx=0; idx<rows; idx++){
-        
-            for (jdx=0; jdx<cols; jdx++){
-            
-                sprintf(zahlText,"%.8f", matrix[idx][jdx]);
-                
-                for (kdx=0; kdx<(int)strlen(zahlText); kdx++){
-                
-                    if (zahlText[kdx] == '.'){
-                    
-                        zahlText[kdx] == ',';
-                        break;
-                    }
-                
-                }
-                fprintf(fp,"%s;",zahlText);
+                maxValue = values[idx];
             }
-            fprintf(fp,"%s","\n");
         }
-        
-        fclose(fp);
+        return maxValue;
     }
-
-
+    // ##############################################################################################
     
+    switch(setjmp(env)){
+        case 0: return maximum(values, length);
+        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); return NAN;
+        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+    }
+}
+
+
+// ##################################################################################################
+// ##################################################################################################
+
+
+int get_dvector_max(int *values, int length){
+
+    /*
+    
+        DESCRIPTION:
+        Determines the maximum value of a vector of type int and length "length".
+        
+        INPUT:
+        int *values	...	pointer to the vector of integers.
+        int length	...	length of the vector.
+        
+        OUTPUT:
+        on success	...	maximum value of that vector
+        on failure	...	exit(errno)
+        
+    */
+    
+    int idx;
+    jmp_buf env;
+    
+    // ####################################### FUNCTION #############################################    
+    double maximum(int *values, int length){     
+    
+        if (length <= 0){
+            longjmp(env, 1);
+        }
+    
+        int maxValue = values[0];
+    
+        for (idx=0; idx<length; idx++){
+    
+            if (values[idx] > maxValue){
+        
+                maxValue = values[idx];
+            }
+        }
+        return maxValue;
+    }
+    // ##############################################################################################
+    
+    switch(setjmp(env)){
+        case 0: return maximum(values, length);
+        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); exit(errno);
+        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); exit(errno);
+    }  
 
 }
 
 
-int outputRasterCSV(struct usr_data_point **raster, char *output_dir, char *filename, int rows, int cols){
+// ##################################################################################################
+// ##################################################################################################
+
+
+double get_fvector_min(double *values, int length){
 
     /*
-        Ausgabe:
-        - CSV-Datei in Form eines "rows x cols" Rasters mit den interpolierten Werten.
-        - CSV-Datei in Form eines "rows x cols" Rasters mit den Werten der geogr. Breite eines jeden Rasterpunktes.
-        - CSV-Datei in Form eines "rows x cols" Rasters mit den Werten der geogr. Länge eines jeden Rasterpunktes.
+    
+        DESCRIPTION:
+        Determines the minimum value of a vector of type double and length "length".
         
-        Rückgabewert:
-        Erfolg: True "1"
-        Fehler: False "0" 
+        INPUT:
+        double *values	...	pointer to the vector of doubles.
+        int length	...	length of the vector.
+        
+        OUTPUT:
+        on success	...	minimum value of that vector
+        on failure	...	NAN
+        
+    */
+
+    
+    int idx;
+    jmp_buf env;
+    
+    // ####################################### FUNCTION #############################################    
+    double minimum(double *values, int length){ 
+        
+        double minValue = values[0];
+    
+    
+        for (idx=0; idx<length; idx++){
+    
+            if (values[idx] < minValue){
+        
+                minValue = values[idx];
+            }
+        }
+        return minValue;
+    }
+    // ##############################################################################################
+    
+    switch(setjmp(env)){
+        case 0: return minimum(values, length);
+        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); return NAN;
+        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+    }
+}
+
+
+// ##################################################################################################
+// ##################################################################################################
+
+
+int get_dvector_min(int *values, int length){
+
+    /*
+    
+        DESCRIPTION:
+        Determines the minimum value of a vector of type int and length "length".
+        
+        INPUT:
+        int *values	...	pointer to the vector of integers.
+        int length	...	length of the vector.
+        
+        OUTPUT:
+        on success	...	minimum value of that vector
+        on failure	...	NAN
+        
+    */
+    
+    int idx;
+    jmp_buf env;
+    
+    // ####################################### FUNCTION #############################################    
+    double minimum(int *values, int length){     
+    
+        if (length <= 0){
+            longjmp(env, 1);
+        }
+    
+        int minValue = values[0];
+    
+        for (idx=0; idx<length; idx++){
+    
+            if (values[idx] < minValue){
+        
+                minValue = values[idx];
+            }
+        }
+        return minValue;
+    }
+    // ##############################################################################################
+    
+    switch(setjmp(env)){
+        case 0: return minimum(values, length);
+        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); exit(errno);
+        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); exit(errno);
+    }     
+}
+
+
+// ##################################################################################################
+// ##################################################################################################
+
+
+int outputRasterCSV(struct usr_data_point **raster, char *output_dir, char *filename, int rows, int cols, bool show_output){
+
+    /*
+    
+        DESCRIPTION:
+        This function outputs 3 csv-files.
+        1.	csv-file with the values of the raster in dimensions of rows x cols.
+        2.	csv-file with the latitude values of the values in dimensions of Map.rows x Map.cols.
+        3.	csv-file with the longitude values of thevalues in dimensions of Map.rows x Map.cols.
+        
+        INPUT:
+        struct usr_data_point **raster	...	pointer to the matrix you want to output of type struct usr_data_point.
+        char *output_dir		...	directory you want to output the data
+        char *filename			...	filename of the csv-file
+        int rows			...	number of rows of the raster
+        int cols			...	number of columns of the raster
         
     */
 
 
 
     int idx, jdx, kdx;
-    char valueText[20], latText[20], lonText[20];
-    char path[100];
-
+    jmp_buf env;
     
-    FILE *fp_values, *fp_lat, *fp_lon;
-
-
-    // Filepointer für die Rasterwerte:
-    fp_values = fopen(strcat(strcpy(path, output_dir), filename),"w");
+    // ####################################### FUNCTION #############################################    
+    double output(struct usr_data_point **raster, char *output_dir, char *filename, int rows, int cols, bool show_output){
     
-    // Filepointer für die Breitengrade der Rasterpunkte
-    fp_lat = fopen(strcat(strcpy(path, output_dir), "lat.csv"),"w");
-       
-    // Filepointer für die Längengrade der Rasterpunkte    
-    fp_lon = fopen(strcat(strcpy(path, output_dir), "lon.csv"),"w");
+        char valueText[20], latText[20], lonText[20];
+        char path[100];
+    
+        FILE *fp_values, *fp_lat, *fp_lon;
     
     
+        if ((rows<=0) || (cols<=0)){
+            longjmp(env, 1);        
+        }
     
-    
-    if ((fp_values == NULL) || (fp_lat == NULL) || (fp_lon == NULL)){
-    
-        printf("Dateifehler!\nDefinierter Filepointer ist NULL.\n");
-        return false;
-    }
-    
-    else{
-    
-        printf("Schreibe csv-Ausgabedateien ... ");
-        fflush(stdout);
-    
-        for (idx=0; idx<rows; idx++){
+        // file pointer to the values csv file:
+        fp_values = fopen(strcat(strcpy(path, output_dir), filename),"w");
+        if (fp_values == NULL){
+            longjmp(env, 2);
+        }
         
+        // file pointer to the latitude csv file:
+        fp_lat = fopen(strcat(strcpy(path, output_dir), "lat.csv"),"w");
+        if (fp_lat == NULL){
+            longjmp(env, 3);
+        }
+    
+        // file pointer to the csv file for the longitude values:  
+        fp_lon = fopen(strcat(strcpy(path, output_dir), "lon.csv"),"w");
+        if (fp_lon == NULL){
+            longjmp(env, 2);
+        }
+
+        // show output?
+        if (show_output){
+            printf("\nwriting csv files to:\n");
+            printf(">>> %s\n", output_dir);
+            
+            printf("writing ... ");
+            fflush(stdout);
+        }
+    
+        
+        for (idx=0; idx<rows; idx++){
             for (jdx=0; jdx<cols; jdx++){
             
-                // Lese den Wert in ein Textfeld ein:
+                // pass the value to a field of type char:
                 sprintf(valueText,"%.3f", raster[idx][jdx].value);
                 
-                // Lese die geogr. Breite in ein Textfeld ein:
+                // pass the latitude to a field of type char:
                 sprintf(latText, "%.4f", raster[idx][jdx].lat);
                 
-                // Lese die geogr. Länge in ein Textfeld ein:
+                // pass the longitude to a field of type char:
                 sprintf(lonText, "%.4f", raster[idx][jdx].lon);
                 
                 
-                
-                
-                // Schreibe die CSV-Datei der interpolierten Werte:
+                // check for points and change them to comma
                 for (kdx=0; kdx<(int)strlen(valueText); kdx++){
                 
-                    if (valueText[kdx] == '.'){
+                    if (valueText[kdx] == ','){
                     
-                        valueText[kdx] == ',';
+                        valueText[kdx] = '.';
                         break;
                     }
                 
                 }
+                // write that value into the file
                 fprintf(fp_values,"%s",valueText);
 
-                // Schreibe die CSV-Datei der geogr. Breite:
+
+                // check for points and change them to comma
                 for (kdx=0; kdx<(int)strlen(latText); kdx++){
                 
-                    if (latText[kdx] == '.'){
+                    if (latText[kdx] == ','){
                     
-                        latText[kdx] == ',';
+                        latText[kdx] = '.';
                         break;
                     }
-                
                 }
+                // write that latitude into the file               
                 fprintf(fp_lat,"%s",latText);
 
-                // Schreibe die CSV-Datei der geogr. Breite:
+                // check for points and change them to comma
                 for (kdx=0; kdx<(int)strlen(lonText); kdx++){
                 
-                    if (lonText[kdx] == '.'){
+                    if (lonText[kdx] == ','){
                     
-                        lonText[kdx] == ',';
+                        lonText[kdx] = '.';
                         break;
                     }
-                
                 }
+                // write that longitude into the file                
                 fprintf(fp_lon,"%s",lonText);
                 
+                // add a semicolon to the line until ... 
                 if (jdx != (cols-1)){
                 
                     fprintf(fp_values,"%s",";");
@@ -2306,7 +2339,7 @@ int outputRasterCSV(struct usr_data_point **raster, char *output_dir, char *file
                     
                 }
                 else{
-                
+                    // ... we finish that line, than add a newline sign:
                     fprintf(fp_values, "%s", "\n");
                     fprintf(fp_lat, "%s", "\n");    
                     fprintf(fp_lon, "%s", "\n");                
@@ -2315,60 +2348,95 @@ int outputRasterCSV(struct usr_data_point **raster, char *output_dir, char *file
             }
         }
         
+        // close all files:
         fclose(fp_values);
         fclose(fp_lat);
         fclose(fp_lon);
         
-        printf("ok\n");
-        return true;
+        if (show_output){
+            printf("ok\n");
+        }
     }
+    // ##############################################################################################
+
+    switch(setjmp(env)){
+        case 0: output(raster, output_dir, filename, rows, cols, output); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n The number of rows and columns must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
+        case 2: fprintf(stderr, "ERROR: %s --> %d:\n The filepointer returns an error!\n>>> %s\n\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;
+        case 3: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    }  
 }
 
+
+// ##################################################################################################
+// ##################################################################################################
 
 
 int get_output_information(struct usr_map *Map){
 
     /*
-        Bestimmt und schreibt Metadaten zum interpolierten Raster in das "Map"-Objekt:
+    
+        DESCRIPTION:
+        Calculates/determines additional information to the output raster.
         
-        Rückgabewert:
-        Erfolg: True "1"
+        INPUT:
+        struct usr_map *Map	...	pointer to the map object
+        
+        OUTPUT: (error code)
+        on success		...	EXIT_SUCCESS
+        on failure		...	EXIT_FAILURE
+        
     */
     
     int idx, jdx;
-    double sum=0;
+    jmp_buf env;
     
-    // Bestimmung des Maximum- und Minimumwerts.
-    Map->output_data.maximum = Map->raster[0][0].value;
-    Map->output_data.minimum = Map->raster[0][0].value; 
-    Map->output_data.average = Map->raster[0][0].value; 
+    // ####################################### FUNCTION #############################################
+    void calc(struct usr_map *Map){
+    
+        double sum=0;
+    
+        // determine the maximum and minimum value of the raster:
+        Map->output_data.maximum = Map->raster[0][0].value;
+        Map->output_data.minimum = Map->raster[0][0].value; 
+        Map->output_data.average = Map->raster[0][0].value; 
        
-    for (idx=0; idx<Map->rows; idx++){
+        for (idx=0; idx<Map->rows; idx++){
     
-        for (jdx=0; jdx<Map->cols; jdx++){
+            for (jdx=0; jdx<Map->cols; jdx++){
         
-            if (Map->raster[idx][jdx].value > Map->output_data.maximum){
+                if (Map->raster[idx][jdx].value > Map->output_data.maximum){
             
-                Map->output_data.maximum = Map->raster[idx][jdx].value;
+                    Map->output_data.maximum = Map->raster[idx][jdx].value;
+                }
+            
+                if (Map->raster[idx][jdx].value < Map->output_data.minimum){
+            
+                    Map->output_data.minimum = Map->raster[idx][jdx].value;
                 
-            }
+                }
             
-            if (Map->raster[idx][jdx].value < Map->output_data.minimum){
-            
-                Map->output_data.minimum = Map->raster[idx][jdx].value;
-                
-            }
-            
-            sum += Map->raster[idx][jdx].value;
+                sum += Map->raster[idx][jdx].value;
                   
+           }
+    
         }
     
+        Map->output_data.average = sum / (double)(Map->rows * Map->cols);
     }
-    
-    Map->output_data.average = sum / (double)(Map->rows * Map->cols);
-    return true;
+    // ##############################################################################################
+
+    switch(setjmp(env)){
+        case 0: calc(Map); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    }    
 }
 
+
+// ##################################################################################################
+// ##################################################################################################
 
 
 int check_matrix(double **matrix, int rows, int cols, bool show_output){
@@ -2497,96 +2565,146 @@ int check_matrix(double **matrix, int rows, int cols, bool show_output){
 // ##################################################################################################
 
     
-void show_variogram_data(struct usr_map *Map){
+int show_variogram_data(struct usr_map *Map){
 
     /*
         DESCRIPTION:
         shows you a summary of the variogram data if the "show_output" attribut of the map object is set to true.
+        
+        INPUT:
+        struct usr_map *Map	...	pointer to the map object.
+        
+        OUTPUT: (error code)
+        on success		...	EXIT_SUCCESS
+        on failure		...	EXIT_FAILURE
+        
     */
-
-    if (Map->show_output){
-
-        int idx;
     
-        printf("########################################################################################\n");    
-        printf("#################################### SEMIVARIOGRAM #####################################\n\n");
+    jmp_buf env;
+    int idx;    
+    
+    
+    
+    // ####################################### FUNCTION #############################################
+    void show(struct usr_map *Map){
+    
+        if (Map->show_output){
+
+            printf("########################################################################################\n");    
+            printf("#################################### SEMIVARIOGRAM #####################################\n\n");
        
-        printf("--------------------------------------\n");
-        printf("Solution of the polynomic function:\n");
-        printf("Order:%3d\n", Map->variogram.reg_function.order);
-        for (idx=0; idx<Map->variogram.reg_function.order+1; idx++){
-            printf("b%d: %11.6f\n", idx, Map->variogram.reg_function.solution[idx]);
-        }
-        printf("R²: %8.3f\n", Map->variogram.reg_function.solution[Map->variogram.reg_function.order+1]);    
-        printf("--------------------------------------\n\n");
+            printf("--------------------------------------\n");
+            printf("Solution of the polynomic function:\n");
+            printf("Order:%3d\n", Map->variogram.reg_function.order);
+            for (idx=0; idx<Map->variogram.reg_function.order+1; idx++){
+                printf("b%d: %11.6f\n", idx, Map->variogram.reg_function.solution[idx]);
+            }
+            printf("R²: %8.3f\n", Map->variogram.reg_function.solution[Map->variogram.reg_function.order+1]);    
+            printf("--------------------------------------\n\n");
         
-        printf("Distance classes:\n");
-        printf("----------------------------------------------------------------------------------------\n");    
-        printf("%3s%12s%12s%15s%15s%15s\n","id", "lower Limit", "upper Limit", "Distance (AVG)", "Variance (AVG)", "Variance (REG)");
-        for (idx=0; idx<Map->variogram.numClasses; idx++){
+            printf("Distance classes:\n");
+            printf("----------------------------------------------------------------------------------------\n");    
+            printf("%3s%12s%12s%15s%15s%15s\n","id", "lower Limit", "upper Limit", "Distance (AVG)", "Variance (AVG)", "Variance (REG)");
+            for (idx=0; idx<Map->variogram.numClasses; idx++){
     
-            printf("%3d%12d%12d%15.3f%15.3f%15.3f\n", idx,
-                                          Map->variogram.classes[idx].lowerLimit,
-                                          Map->variogram.classes[idx].upperLimit,
-                                          Map->variogram.classes[idx].distance_avg,
-                                          Map->variogram.classes[idx].variance_avg,
-                                          Map->variogram.classes[idx].variance_avg_reg);
+                printf("%3d%12d%12d%15.3f%15.3f%15.3f\n", idx,
+                                                          Map->variogram.classes[idx].lowerLimit,
+                                                          Map->variogram.classes[idx].upperLimit,
+                                                          Map->variogram.classes[idx].distance_avg,
+                                                          Map->variogram.classes[idx].variance_avg,
+                                                          Map->variogram.classes[idx].variance_avg_reg);
         
-        }
-        printf("----------------------------------------------------------------------------------------\n\n");
+            }
+            printf("----------------------------------------------------------------------------------------\n\n");
   
-        printf("--------------------------------------\n");
-        printf("Model - fit-index: %d\n\n", Map->variogram.model_adjust_index);
-        printf("Solution of the semivariance-model:\n");    
-        printf("nugget: %.3f\n", Map->variogram.nugget);
-        printf("sill: %.3f\n", Map->variogram.sill);
-        printf("range: %.3f\n", Map->variogram.range);
-        printf("--------------------------------------\n\n");
-        printf("########################################################################################\n");
-        printf("########################################################################################\n\n");
-    }      
+            printf("--------------------------------------\n");
+            printf("Model - fit-index: %d\n\n", Map->variogram.model_adjust_index);
+            printf("Solution of the semivariance-model:\n");    
+            printf("nugget: %.3f\n", Map->variogram.nugget);
+            printf("sill: %.3f\n", Map->variogram.sill);
+            printf("range: %.3f\n", Map->variogram.range);
+            printf("--------------------------------------\n\n");
+            printf("########################################################################################\n");
+            printf("########################################################################################\n\n");
+        }
+    }
+    // ##############################################################################################
+
+    switch(setjmp(env)){
+        case 0: show(Map); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    }          
 }
 
 
+// ##################################################################################################
+// ##################################################################################################
 
 
-void show_map_info(struct usr_map *Map){
+int show_map_info(struct usr_map *Map){
 
     /*
-        Zeigt Informationen zum aktuellen Objekt.
+    
+        DESCRIPTION
+        Show information to the current interpolated raster.
+        
+        INPUT:
+        struct usr_map *Map	...	pointer to the map object
+        
+        OUTPUT: (error code)
+        on success		...	EXIT_SUCCESS
+        on failure		...	EXIT_FAILURE
+        
     */
 
-    printf("############### INFORMATION ##############\n\n");
-    printf("   Geogr. Breite: %.3f (Minimum)\n",Map->minLat);
-    printf("   Geogr. Breite: %.3f (Maximum)\n",Map->maxLat);   
-    printf("   Geogr. Laenge: %.3f (Minimum)\n",Map->minLon);
-    printf("   Geogr. Laenge: %.3f (Maximum)\n\n",Map->maxLon);    
-    printf("\n");    
-    printf("   Anzahl der Felder: %d\n", (Map->rows)*(Map->cols));
-    printf("   Zeilen: %d\n", Map->rows);
-    printf("   Spalten: %d\n", Map->cols); 
-    printf("\n");    
-    printf("   Aufloesung (Breite): %.3f\n", Map->latRes);
-    printf("   Aufloesung (Laenge): %.3f\n", Map->lonRes); 
-    printf("   Aufloesung (Breite, km): %.3f\n", Map->latMetRes);
-    printf("   Aufloesung (Laenge, km): %.3f\n", Map->lonMetRes);  
-    printf("\n");    
-    printf("   --------------Inputdaten---------------\n\n");
-    printf("   Anzahl der Stationswerte: %d\n", Map->input_data.length);
-    printf("   Maximumwert: %.3f\n", Map->input_data.maximum);
-    printf("   Minimumwert: %.3f\n", Map->input_data.minimum);
-    printf("   Mittelwert: %.3f\n", Map->input_data.average);
-    printf("\n");
-    printf("   --------------Outputdaten--------------\n\n");
-    printf("   Maximumwert: %.3f\n", Map->output_data.maximum);
-    printf("   Minimumwert: %.3f\n", Map->output_data.minimum);
-    printf("   Mittelwert: %.3f\n", Map->output_data.average);
-    printf("\n");    
-    printf("##########################################\n\n");          
+    jmp_buf env;
+    
+    // ####################################### FUNCTION #############################################    
+    void show(struct usr_map *Map){
+    
+        if (Map->show_output){
+            printf("############### INFORMATION ##############\n\n");
+            printf("   Geogr. Breite: %.3f (Minimum)\n",Map->minLat);
+            printf("   Geogr. Breite: %.3f (Maximum)\n",Map->maxLat);   
+            printf("   Geogr. Laenge: %.3f (Minimum)\n",Map->minLon);
+            printf("   Geogr. Laenge: %.3f (Maximum)\n\n",Map->maxLon);    
+            printf("\n");    
+            printf("   Anzahl der Felder: %d\n", (Map->rows)*(Map->cols));
+            printf("   Zeilen: %d\n", Map->rows);
+            printf("   Spalten: %d\n", Map->cols); 
+            printf("\n");    
+            printf("   Aufloesung (Breite): %.3f\n", Map->latRes);
+            printf("   Aufloesung (Laenge): %.3f\n", Map->lonRes); 
+            printf("   Aufloesung (Breite, km): %.3f\n", Map->latMetRes);
+            printf("   Aufloesung (Laenge, km): %.3f\n", Map->lonMetRes);  
+            printf("\n");    
+            printf("   --------------Inputdaten---------------\n\n");
+            printf("   Anzahl der Stationswerte: %d\n", Map->input_data.length);
+            printf("   Maximumwert: %.3f\n", Map->input_data.maximum);
+            printf("   Minimumwert: %.3f\n", Map->input_data.minimum);
+            printf("   Mittelwert: %.3f\n", Map->input_data.average);
+            printf("\n");
+            printf("   --------------Outputdaten--------------\n\n");
+            printf("   Maximumwert: %.3f\n", Map->output_data.maximum);
+            printf("   Minimumwert: %.3f\n", Map->output_data.minimum);
+            printf("   Mittelwert: %.3f\n", Map->output_data.average);
+            printf("\n");    
+            printf("##########################################\n\n");          
+        }
+    }
+    // ##############################################################################################
+
+    switch(setjmp(env)){
+        case 0: show(Map); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    }    
 }
 
 
-
+// ##################################################################################################
+// ##################################################################################################
 
 
 int show_matrix(char *name, double **matrix, int rows, int cols, bool show_output){
@@ -2616,7 +2734,7 @@ int show_matrix(char *name, double **matrix, int rows, int cols, bool show_outpu
     
     
     // ####################################### FUNCTION #############################################    
-    double show(double **matrix, int rows, int cols){ 
+    void show(double **matrix, int rows, int cols){ 
     
         if ((rows <= 0) || (cols <= 0)){
             longjmp(env, 1);
@@ -2648,117 +2766,162 @@ int show_matrix(char *name, double **matrix, int rows, int cols, bool show_outpu
 }
 
 
+// ##################################################################################################
+// ##################################################################################################
 
 
-
-void show_input_data(struct usr_map *Map){
+int show_input_data(struct usr_map *Map){
 
      /*
-        Gibt die Eingabedaten aus.    
+     
+        DESCRIPTION:
+        shows the input dataset on stdout.
+        
+        INPUT:
+        struct usr_map *Map	...	pointer to the map object.
+        
+        OUTPUT: (error code)
+        on success		...	EXIT_SUCCESS
+        on failure		...	EXIT_FAILURE
+        
     */   
 
     int idx;
+    jmp_buf env;
     
+    // ####################################### FUNCTION #############################################    
+    void show(struct usr_map *Map){    
     
-    printf("%3s %-30s%10s%10s%10s%6s%6s\n","id", "name", "lat", "lon", "value", "row", "col");
-    for (idx=0; idx<Map->input_data.length; idx++){
-    
-        printf("%3d %-30s%10.3f%10.3f%10.2f%6d%6d\n",idx,
-                                                     Map->input_data.data[idx].name,
-                                                     Map->input_data.data[idx].lat,
-                                                     Map->input_data.data[idx].lon,
-                                                     Map->input_data.data[idx].value,
-                                                     Map->input_data.data[idx].row_idx,
-                                                     Map->input_data.data[idx].col_idx);
-    }
-}
-
-
-
-void show_raster(struct usr_data_point **raster, int *rows, int *cols){
-
-    /*
-        Gibt ein Raster vom Datentyp "usr_data_point" in den Grenzen rows x cols aus.
-    */
-
-    int idx, kdx;
-    
-    for (idx=0; idx<*rows; idx++){
-    
-        for (kdx=0; kdx<*cols; kdx++){
+        printf("%3s %-30s%10s%10s%10s%6s%6s\n","id", "name", "lat", "lon", "value", "row", "col");
         
-            //geogr_laenge
-            //printf("%.2f ", raster[idx][kdx].lon);
-            
-            //geogr_breite          
-            //printf("%.2f ", raster[idx][kdx].lat);
-            
-            //werte          
-            printf("%.0f ", raster[idx][kdx].value);           
-        }
-        printf("\n");
+        for (idx=0; idx<Map->input_data.length; idx++){
     
+            printf("%3d %-30s%10.3f%10.3f%10.2f%6d%6d\n",idx,
+                                                         Map->input_data.data[idx].name,
+                                                         Map->input_data.data[idx].lat,
+                                                         Map->input_data.data[idx].lon,
+                                                         Map->input_data.data[idx].value,
+                                                         Map->input_data.data[idx].row_idx,
+                                                         Map->input_data.data[idx].col_idx);
+            
+        }
     }
+    // ##############################################################################################
 
+    switch(setjmp(env)){
+        case 0: show(Map); return EXIT_SUCCESS;
+        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;                
+        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    }       
 }
+
+
+// ##################################################################################################
+// ##################################################################################################
 
 
 void free_raster(struct usr_map *Map){
 
     int idx;
     
+    printf("\n");
     
-    // Leeren es Eingaberasters:
-    for (idx=0; idx<(Map->rows); idx++){
+    // check if the raster exists
+    if (Map->raster != NULL){
+        for (idx=0; idx<(Map->rows); idx++){
     
-        free(Map->raster[idx]);
-    
+            free(Map->raster[idx]);
+        }
+        if (Map->show_output){
+            free(Map->raster);
+            printf("%-40s %s\n","raster:","deallocate memory successful!");
+        }
     }
     
-    free(Map->raster);
-    printf("Eingaberaster: Speicher freigegeben!\n");
+    //--------------------------------------------------------------------------------
+       
+    // check if distance matrix exists:
+    if (Map->distance_matrix != NULL){
+        for (idx=0; idx<Map->input_data.length; idx++){
     
+            free(Map->distance_matrix[idx]);
+        }
+        if (Map->show_output){        
+            free(Map->distance_matrix);
+            printf("%-40s %s\n","distance matrix:","deallocate memory successful!");
+        }
+    }   
+     
+    //--------------------------------------------------------------------------------
+          
+    // check if covariance matrix exists:
+    if (Map->covariance_matrix != NULL){
+        for (idx=0; idx<Map->input_data.length+1; idx++){
     
-    //Leeren der Distanzmatrix:
-    for (idx=0; idx<Map->input_data.length; idx++){
-    
-        free(Map->distance_matrix[idx]);
+            free(Map->covariance_matrix[idx]);
+        }
+        if (Map->show_output){                
+            free(Map->covariance_matrix);
+            printf("%-40s %s\n","covariance matrix:","deallocate memory successful!");
+        }
     }
-    free(Map->distance_matrix);
-    printf("Distanzmatrix: Speicher freigegeben!\n");   
+     
+    //--------------------------------------------------------------------------------
+           
+    // check if inverted covariance matrix exists:
+    if (Map->covariance_matrix_inv != NULL){    
+        for (idx=0; idx<Map->input_data.length+1; idx++){
     
-    // Leeren der Kovarianzmatrix:
-    for (idx=0; idx<Map->input_data.length+1; idx++){
-    
-        free(Map->covariance_matrix[idx]);
+            free(Map->covariance_matrix_inv[idx]);
+        }
+        if (Map->show_output){                        
+            free(Map->covariance_matrix_inv);
+            printf("%-40s %s\n","inverted covariance matrix:","deallocate memory successful!");   
+        }
     }
-    free(Map->covariance_matrix);
-    printf("Kovarianzmatrix: Speicher freigegeben!\n");
-
-     // Leeren der Inversen der Kovarianzmatrix:
-    for (idx=0; idx<Map->input_data.length+1; idx++){
-    
-        free(Map->covariance_matrix_inv[idx]);
-    }
-    free(Map->covariance_matrix_inv);
-    printf("Inverse der Kovarianzmatrix: Speicher freigegeben!\n");   
-    
-    return;
 }
 
+
+// ##################################################################################################
+// ##################################################################################################
 
 
 void free_vector(struct usr_map *Map){
 
-    free(Map->input_data.data);
-    printf("Eingabedaten: Speicher freigegeben!\n");
+    printf("\n");
     
+    // check if input dataset exists
+    if (Map->input_data.data != NULL){
+        free(Map->input_data.data);
+        
+        if (Map->show_output){
+            printf("%-40s %s\n","input dataset:","deallocate memory successful!");
+        }
+    }
+
     
-    free(Map->variogram.classes);
-    printf("Variogrammklassen: Speicher freigegeben!\n");
+    //--------------------------------------------------------------------------------
     
-    free(Map->variogram.reg_function.solution);
-    printf("Variogramm -> Regressionsfunktion: Speicher freigegeben\n");
+    // check if the variogram classes exists    
+    if (Map->variogram.classes != NULL){
+        free(Map->variogram.classes);
+        
+        if (Map->show_output){    
+            printf("%-40s %s\n","variogram classes:","deallocate memory successful!");
+        }
+    }
+
+    //--------------------------------------------------------------------------------    
+    
+    // check if the vector for the solution of the polynomic function exists?
+    if (Map->variogram.reg_function.solution != NULL){
+        free(Map->variogram.reg_function.solution);
+        
+        if (Map->show_output){    
+            printf("%-40s %s\n","solution of polynomic function:", "deallocate memory successful!");
+        }
+    }
+    
 }
 
 
