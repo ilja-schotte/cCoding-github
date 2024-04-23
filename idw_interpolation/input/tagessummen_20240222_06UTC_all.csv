@@ -1,0 +1,931 @@
+name;lat;lon;value
+Oberstdorf;47,398429;10,275881;0
+Zugspitze;47,421037;10,984761;2,9
+Balderschwang;47,465031;10,104292;0
+Garmisch-Partenkirchen;47,482989;11,062126;0
+Oberreute;47,553798;9,940647;0
+Rheinfelden;47,558973;7,772149;3
+Sigmarszell-Zeisertsweiler;47,577598;9,740446;0
+Oberammergau;47,602966;11,060714;0,1
+Immenstadt-Reute;47,607783;10,202039;0,1
+Kreuth-Glashütte;47,610509;11,646185;0,1
+Kiefersfelden-Gach;47,618701;12,166532;0
+Ramsau-Schwarzeck/Schmuck;47,627899;12,901492;0
+Jachenau-Tannern;47,627941;11,516628;0
+Oy-Mittelberg-Petersthal;47,636179;10,38923;0
+Berchtesgaden;47,639214;13,006754;0
+Kohlgrub, Bad (Rosshof);47,665187;11,080459;0,1
+Obere Firstalm/Schlierseer Berge;47,67046;11,85393;0
+Reit im Winkl;47,675415;12,469775;0
+Wutöschingen-Ofteringen;47,678267;8,380132;4,8
+Friedrichshafen-Unterraderach;47,684486;9,440903;1
+Konstanz;47,695219;9,130698;2,9
+Dachsberg-Wolpadingen;47,700359;8,105736;10,8
+Marktschellenberg;47,704589;13,037189;0
+Wangen/Allgäu-Schwaderberg;47,70958;9,865965;0,3
+Steingaden-Lauterbach;47,71121;10,875798;0
+Kempten;47,723263;10,334786;0
+Brannenburg-Degerndorf;47,724089;12,109214;0
+Aschau-Stein;47,727538;12,298183;0
+Todtmoos;47,727934;7,998838;14,3
+Gottmadingen;47,734403;8,793208;2,5
+Ühlingen-Birkendorf;47,745237;8,31112;6,6
+Waakirchen-Demmelberg;47,756447;11,692754;0,1
+Malsburg-Marzell;47,766726;7,720509;5,1
+Kraftisried;47,767357;10,460351;0
+Piding;47,77239;12,907282;0
+Singen;47,773799;8,821934;2,9
+Leutkirch-Herlazhofen;47,795529;10,032457;0,9
+Deggenhausertal-Azenweiler;47,800675;9,41082;2,7
+Hohenpeißenberg;47,800869;11,010819;0
+Weingarten, Kr. Ravensburg;47,806248;9,620579;2,4
+Müllheim;47,806371;7,638692;3,6
+Irschenberg-Kasthub;47,817673;11,868114;0
+Blumberg-Randen;47,818957;8,577367;1,1
+Siegsdorf-Höll;47,835009;12,654781;0
+Teisendorf;47,852623;12,828194;0
+Stockach;47,859059;9,015181;2,9
+Lenzkirch-Ruhbühl;47,859705;8,230755;9,8
+Chiemsee-Herrenchiemsee;47,86649;12,395005;0
+Feldberg/Schwarzwald;47,874842;8,003793;5,7
+Rosenheim;47,875339;12,127976;0
+Kaufbeuren-Oberbeuren;47,876124;10,584889;0
+Attenkam;47,877428;11,364282;0
+Holzkirchen;47,882292;11,696146;0
+Wielenbach (Demollstr.);47,882679;11,157584;0,2
+Chieming;47,884257;12,540368;0
+Waging am See;47,923665;12,755781;0
+Geisingen;47,924175;8,647358;2,8
+Aulendorf-Blönried;47,926106;9,592647;3,6
+Ottobeuren;47,930302;10,310003;0
+Pfullendorf;47,934471;9,28693;6,9
+Breitnau;47,938457;8,076086;7,3
+Feldkirchen-Westerham-Lenzmühle;47,94114;11,90044;0
+Neuhausen ob Eck-Unterschwandorf;47,951903;8,993205;4,7
+Rot an der Rot-Buch;47,958867;10,013852;0,8
+Buchenbach;47,96248;7,998337;7,3
+Eisenbach;47,963364;8,269301;1,2
+Vilgertshofen-Pflugdorf;47,969218;10,915188;0
+Schäftlarn-Kloster Schäftlarn;47,976706;11,469292;0,1
+Memmingen;47,982065;10,13838;0,7
+Oberhaching-Laufzorn;48,013027;11,552433;0,1
+Amerang-Pfaffing;48,019737;12,292473;0
+Freiburg;48,023242;7,834292;2,1
+Trostberg;48,031106;12,539575;0
+Ihringen;48,041893;7,632223;0,3
+Buchloe;48,044297;10,737473;0
+Villingen-Schwenningen;48,045325;8,460769;9,9
+Mengen-Ennetach;48,055686;9,3185;3,7
+Sigmaringen-Laiz;48,071864;9,194326;2,7
+Simonswald-Obersimonswald;48,082096;8,091871;11,2
+Biberach an der Riß-Bergerhausen;48,100329;9,805753;2,1
+Ebersberg-Halbing;48,100334;11,987202;0
+Klippeneck;48,105397;8,754788;1,5
+Emmendingen-Mundingen;48,137773;7,83505;3,3
+Altheim, Kreis Biberach;48,147903;9,459615;2,3
+München-Stadt;48,163202;11,542893;0,6
+Meßstetten-Appental;48,169353;8,943265;1,8
+Rottweil;48,181464;8,635552;3,3
+Eschbronn-Mariazell;48,186764;8,467166;5,1
+Mehring, Kr. Altötting-Niederholz;48,186976;12,809797;0
+Weisweil-Waldeckhof;48,188008;7,697606;0,8
+Langenenslingen-Ittenhausen;48,199422;9,332656;1
+Elzach-Fisnacht;48,201207;8,10884;12,9
+Isen-Westach;48,202197;12,038203;0
+Maisach-Galgen;48,206984;11,203508;0
+Tüßling;48,208035;12,62963;0,1
+Dietenheim;48,209466;10,065434;1,1
+Oberschleißheim;48,244344;11,552779;0,6
+Balingen-Bronnhaupten;48,263864;8,813418;3
+Simbach/Inn;48,271797;13,027276;0
+Ehingen-Kirchen;48,275422;9,63545;1,7
+Haslach im Kinzigtal;48,276628;8,084099;10,8
+Mühldorf;48,278982;12,502407;0
+Wolfach;48,295324;8,239068;5,6
+Burladingen-Hausen;48,296213;9,070085;2,6
+Weißenhorn-Oberreichenbach;48,309072;10,20486;1,9
+Neuburg/Kammel-Langenhaslach;48,31145;10,377302;3,7
+München-Flughafen;48,347741;11,813385;0,5
+Wurmannsquick-Egelsberg;48,356884;12,767929;0
+Fahrenzhausen;48,363104;11,563476;0
+Lahr;48,364742;7,827986;2,4
+Haigerloch-Weildorf;48,37049;8,766593;6,1
+Diedorf/Schwaben-Biburg;48,373725;10,760493;1,6
+Hechingen;48,375242;8,980043;1,8
+Münsingen-Apfelstetten;48,385084;9,483739;0,6
+Pocking;48,395245;13,313896;0
+Weihenstephan-Dürnast;48,402404;11,694552;0,2
+Altomünster-Maisbrunn;48,406036;11,311694;0,1
+Pfarrkirchen;48,425235;12,992366;0
+Augsburg;48,425292;10,941681;1,7
+Ohlsbach;48,432972;7,993002;3,6
+Ulm-Mähringen;48,441768;9,921613;2
+Vilsbiburg;48,452739;12,33816;0,2
+Freudenstadt;48,453828;8,408952;19,8
+Rottenburg-Kiebingen;48,470407;8,968701;2,2
+Falkenberg,Kr.Rottal-Inn;48,483155;12,724136;0
+Günzburg;48,487813;10,260783;1,5
+Durbach-Ebersweier;48,501722;7,994298;3,3
+Scheyern;48,502505;11,45433;0,1
+Baiersbronn-Mitteltal;48,511594;8,317613;8,4
+Merklingen;48,512173;9,764396;1,3
+Schweitenkirchen-Sünzhausen;48,515095;11,654534;0,1
+Westerheim;48,520569;9,618713;1,5
+Nandlstadt;48,523465;11,839823;0,2
+Metzingen;48,537661;9,273374;0,5
+Fürstenzell;48,545114;13,353159;0
+Schrobenhausen;48,553221;11,284413;1,3
+Dillingen/Donau-Fristingen;48,556225;10,55985;3,4
+Kehl-Odelshofen;48,557579;7,879983;2,3
+Untergriesbach-Glotzing;48,559856;13,74948;0
+Baiersbronn-Ruhestein;48,561496;8,222839;14,1
+Landshut-Reithof;48,57337;12,257556;0,7
+Herrenberg;48,591536;8,854123;2,1
+Hermaringen-Allewind;48,609888;10,267397;3,8
+Loiching;48,6106;12,414314;0,5
+Aldersbach-Kramersepp;48,618259;13,062023;0,1
+Mamming-Schneiderberg;48,618864;12,623317;0,3
+Simmersfeld;48,619138;8,524708;11,1
+Rain am Lech-Wallerdorf;48,6192;11,00585;2,1
+Neubulach-Oberhaugstett;48,65156;8,680111;5,8
+Büchlberg-Tannöd;48,654923;13,507703;0
+Hohenthann;48,657184;12,088712;0,6
+Gottfrieding;48,659461;12,538816;0,4
+Stötten;48,665587;9,864791;2
+Rheinau-Memprechtshofen;48,670276;7,993861;5,4
+Notzingen;48,670477;9,462704;0,5
+Sonnen;48,681855;13,735115;0
+Stuttgart-Echterdingen;48,688265;9,223548;0,6
+Geisenfeld-Engelbrechtsmünster;48,689416;11,635317;1,4
+Elsendorf-Horneck;48,701956;11,849253;1,4
+Nattheim-Fleinheim;48,707084;10,299698;4,3
+Baden-Baden-Geroldsau;48,726985;8,245738;7,5
+Donauwörth-Osterweiler;48,737412;10,739322;1,3
+Renningen-Ihinger Hof;48,742509;8,923969;1,1
+Mallersdorf-Pfaffenberg-Oberlindhart;48,754821;12,211843;0,8
+Baltmannsweiler-Hohengehren;48,757357;9,451366;0,6
+Osterhofen-Thundorf;48,757676;13,013434;1
+Bartholomä;48,758432;9,985462;7
+Schwäbisch Gmünd-Weiler;48,769466;9,873745;7,2
+Saldenburg-Entschenreuth;48,783156;13,314592;0,8
+Wildbad, Bad-Calmbach;48,784843;8,576383;5,7
+Grainet-Rehberg;48,78935;13,629026;0,2
+Harburg;48,791834;10,706234;1,1
+Nassenfels;48,801603;11,218112;2,3
+Tagmersheim-Blossenau;48,810398;10,935893;1,8
+Reimlingen;48,825254;10,506667;1,8
+Straubing;48,827504;12,559695;0,2
+Stuttgart (Schnarrenberg);48,828085;9,200028;0,5
+Kösching;48,830189;11,487243;2
+Metten;48,85476;12,918911;2
+Lauchheim (Berghof);48,876679;10,241347;6,7
+Eichstätt-Landershofen;48,877749;11,23488;2,2
+Bogen-Pfelling;48,884636;12,745292;0,5
+Hagelstadt;48,895982;12,216961;1,9
+Kirchberg/Niederbayern -Zell;48,902292;13,14419;4,9
+Kaisersbach-Cronhütte;48,917038;9,687101;10,1
+Abtsgmünd-Untergröningen;48,921939;9,912859;5,9
+Pforzheim-Ispringen;48,93291;8,69727;1,8
+Polsingen-Döckingen;48,93431;10,758555;0,5
+Gelbelsee;48,948116;11,428929;1,8
+Riedenburg;48,955686;11,727778;2,4
+Sachsenheim;48,95688;9,071052;1,3
+Mühlacker;48,972073;8,873462;2,3
+Rheinstetten;48,972627;8,330081;6
+Ellwangen-Rindelbach;48,989494;10,131236;6,5
+Sankt Englmar;49,002889;12,823688;1,9
+Weißenburg-Emetzheim;49,01153;10,930837;1,6
+Großerlach-Mannenweiler;49,021043;9,603252;10,7
+Zwiesel;49,028013;13,238509;1,8
+Wiesenfelden-Utzenzell;49,032019;12,550537;1,8
+Regensburg;49,042482;12,101943;2,1
+Dinkelsbühl-Oberwinstetten;49,050355;10,289244;5,8
+Thalmässing;49,087068;11,223648;1,8
+Beratzhausen;49,102229;11,795992;3,2
+Bergzabern, Bad;49,107025;7,996749;12,6
+Prackenbach-Neuhäusl;49,108809;12,823114;1,8
+Berching;49,111587;11,432949;2,4
+Bruchsal-Heidelsheim;49,112726;8,637225;3,9
+Großer Arber;49,112887;13,133791;0
+Obersulm-Willsbach;49,128011;9,352493;4,5
+Wüstenrot-Oberheimbach;49,12951;9,494478;6,1
+Parsberg/Oberpfalz-Eglwang;49,15102;11,689638;2,5
+Rülzheim;49,16088;8,300934;7,2
+Feuchtwangen-Heilbronn;49,162297;10,366126;5,4
+Schorndorf-Knöbling;49,16435;12,617494;0,9
+Nittenau-Harting;49,165767;12,278799;1,4
+Eppingen-Elsenz;49,166069;8,848331;4,6
+Kirchberg/Jagst-Herboldshausen;49,180406;9,979985;5,7
+Haundorf-Obererlbach;49,183955;10,824304;1,5
+Pirmasens;49,191191;7,5879;12,7
+Georgensgmünd;49,19343;11,026699;1,6
+Öhringen;49,207016;9,517582;6,4
+Saarbrücken-Ensheim;49,212782;7,107653;13
+Lam-Lambach;49,215374;13,066221;1
+Roth;49,216232;11,103514;1,7
+Weidenbach-Weiherschneidbach;49,224877;10,608471;2,3
+Saarbrücken-Burbach;49,240557;6,935134;12,9
+Roding-Neubäu;49,241248;12,412489;0,7
+Kupferzell-Rechbach;49,242842;9,67859;7,1
+Berus;49,264058;6,686776;16,4
+Schmidmühlen;49,280634;11,913996;3,3
+Waibstadt;49,294262;8,905286;9
+Rohr/Mittelfranken-Dechendorf;49,308214;10,918333;2,5
+Homburg/Saar;49,327792;7,353336;14,3
+Schwandorf;49,327835;12,087053;1,9
+Ingelfingen-Stachenhausen;49,33275;9,704008;5,5
+Weihenzell-Grüb;49,33757;10,60599;3,1
+Wendelstein-Kleinschwarzenlohe;49,34252;11,107672;2,3
+Neunkirchen-Wellesweiler;49,343983;7,229738;19,2
+Trippstadt-Neuhof;49,354424;7,794751;15
+Kastl, Kreis Amberg-Sulzbach;49,365825;11,692529;5,3
+Weinbiet;49,375801;8,121233;5,8
+Heidelberg-Kurpfalzhof;49,376654;8,617704;6,4
+Rothenburg ob der Tauber;49,384854;10,173232;3,4
+Waldmünchen;49,390952;12,683802;0,3
+Neckargemünd-Kleingemünd;49,394491;8,804528;18,4
+Altendorf;49,405261;12,285162;0,8
+Schmidgaden;49,411632;12,076027;1,4
+Schmelz-Hüttersdorf;49,414918;6,836007;19,5
+Dietenhofen;49,41584;10,673442;3,7
+Seckach;49,424907;9,331558;16
+Elztal-Rittersbach;49,425133;9,242957;18,8
+Nürnberg-Netzstall;49,425771;11,253851;3,9
+Kaiserslautern;49,426213;7,755714;11,3
+Oberviechtach;49,452096;12,436546;1
+Burgbernheim;49,45493;10,32406;3,1
+Merzig;49,45662;6,626599;15,4
+Henschtal;49,464808;7,411082;15,3
+Amberg-Unterammersricht;49,469061;11,854626;2,3
+Dürkheim, Bad;49,471913;8,192896;3,8
+Tholey;49,473721;7,038522;22,8
+Pommelsbrunn-Mittelburg;49,477723;11,535701;4,3
+Markt Erlbach-Hagenhofen;49,4875;10,6277;3,8
+Nürnberg;49,503031;11,054923;2,7
+Mannheim;49,506251;8,558439;7,4
+Langenzenn;49,50758;10,788474;4,4
+Buchen, Kr. Neckar-Odenwald;49,518188;9,321293;14,9
+Schönsee-Dietersdorf;49,527338;12,570533;1
+Trausnitz-Reisach;49,532132;12,279805;0,8
+Simmershofen-Adelhofen;49,533376;10,154603;2,3
+Perl-Nennig;49,535353;6,378874;9,9
+Lauda-Königshofen-Heckfeld;49,552228;9,634495;6,7
+Weiskirchen/Saar;49,553365;6,811951;24,2
+Nohfelden-Gonnesweiler;49,556788;7,071557;21,5
+Oberzent-Beerfelden;49,561729;8,967329;23,8
+Grünstadt;49,566492;8,17797;3,2
+Birkenau;49,568553;8,701319;21,2
+Freihung-Großschönbrunn;49,574739;11,885901;2,8
+Worms;49,605078;8,365906;5,1
+Bütthard;49,606254;9,88342;2,1
+Waidhaus-Pfrentsch;49,61803;12,489486;0,4
+Königheim;49,62055;9,603587;3,9
+Ruppertsecken;49,646838;7,883741;6,3
+Plech;49,648967;11,468533;8
+Möhrendorf-Kleinseebach;49,649749;11,007464;2,5
+Gräfenberg-Kasberg;49,66399;11,223886;4
+Markt Bibart;49,66597;10,385074;4,3
+Weiden;49,666221;12,184448;0,5
+Michelstadt;49,669151;9,008528;21,6
+Bayerfeld-Steckweiler -Schmalfelderhof;49,695666;7,838697;4,1
+Lautertal/Odenwald-Reichenbach;49,709003;8,690797;20,1
+Michelstadt-Vielbrunn;49,717686;9,099716;15,3
+Alzey;49,7273;8,116356;4,4
+Altertheim-Oberaltertheim;49,728385;9,769204;3,8
+Flossenbürg;49,731639;12,348947;0,4
+Trier-Zewen;49,732632;6,613147;10,8
+Kitzingen;49,736318;10,178126;3,9
+Trier-Petrisberg;49,747891;6,658305;11,2
+Deuselbach;49,761881;7,054245;12,4
+Freudenberg/Main-Boxtal;49,763628;9,406294;7,5
+Röllbach;49,764399;9,253038;10,5
+Gößweinstein;49,765641;11,306236;4,1
+Würzburg;49,770378;9,957627;4,9
+Pressath-Mühlberg;49,784426;12,03309;1,9
+Kirn;49,789016;7,485275;5,6
+Newel;49,813491;6,585668;10,8
+Neustadt am Kulm-Filchendorf;49,817404;11,863829;2,2
+Otzberg-Habitzheim;49,836621;8,880568;13,5
+Creußen-Bühl;49,844859;11,616042;4,1
+Kreuznach, Bad;49,850173;7,871018;5,4
+Ebrach;49,851954;10,499124;5
+Prosselsheim-Seligenstadt;49,852643;10,100557;3,5
+Tirschenreuth-Lodermühl;49,857617;12,354218;0,8
+Hahnheim;49,86258;8,231085;6,3
+Speichersdorf;49,871305;11,788329;1,8
+Bamberg;49,874252;10,920558;3,3
+Darmstadt;49,880895;8,677906;19,1
+Aufseß-Hochstahl;49,882337;11,265587;3,9
+Groß-Gerau-Wallerstädten;49,905232;8,445949;13,9
+Mähring;49,911341;12,527552;0,8
+Kolitzheim;49,916399;10,236273;2,8
+Schaafheim-Schlierbach;49,919503;8,967164;13,5
+Waldershof-Schafbruck;49,935992;12,093472;4
+Olsdorf;49,944479;6,38211;10,3
+Hahn;49,946281;7,264495;8,6
+Scheßlitz-Köttensdorf;49,956;11,018917;2,8
+Wittlich;49,961731;6,928746;7,8
+Heinersreuth-Vollhof;49,966617;11,519843;2,4
+Arnstein-Müdesheim;49,969403;9,911391;3,8
+Fichtelberg/Oberfranken-Hüttstadl;49,980702;11,837601;4,3
+Rödermark-Ober-Roden;49,983205;8,839542;16,8
+Thurnau-Tannfeld;49,984179;11,400763;2,9
+Geisenheim;49,985894;7,95482;4,7
+Simmern-Wahlbach;49,99959;7,59812;5,3
+Raunheim;50,005626;8,429069;15
+Neuhütten/Spessart;50,008293;9,423765;16,1
+Lohr/Main-Halsbach;50,0132;9,654033;9,7
+Frankfurt/Main;50,025911;8,521294;19,2
+Wunsiedel-Schönbrunn;50,031507;11,974501;5,2
+Blankenrath;50,037229;7,307861;9,3
+Wiesbaden-Biebrich;50,042119;8,233134;14,3
+Rüdesheim-Presberg;50,05166;7,88755;4,2
+Schonungen-Mainberg;50,05794;10,297205;3,2
+Rentweinsdorf-Treinfeld;50,061455;10,812862;8
+Kahl/Main;50,064347;8,992973;11,3
+Heinrichsthal;50,066435;9,345818;20
+Königsberg/Bayern-Holzhausen;50,078549;10,488725;7,1
+Staffelstein, Bad-Stublang;50,080563;11,046698;3
+Lauperath-Scheidchen;50,084966;6,316098;12,5
+Offenbach-Wetterpark;50,08995;8,786165;15,3
+Hohenberg/Eger;50,092005;12,213351;0,8
+Manderscheid-Sonnenhof;50,101542;6,800909;13,2
+Densborn;50,12201;6,599032;12,4
+Ludwigschorgast;50,122626;11,559564;2,3
+Frankfurt/Main-Westend;50,126877;8,669396;17,7
+Mühlheim/Main;50,129438;8,820886;13,5
+Wiesbaden-Auringen;50,132052;8,316938;18,3
+Itzgrund-Herreth;50,133705;10,931664;4
+Burgkunstadt;50,142944;11,232231;1,9
+Stammbach-Querenbach;50,153146;11,740168;5,1
+Maßbach;50,179768;10,271991;3,2
+Aura im Sinngrund;50,180523;9,574273;12,8
+Prüm-Watzerath;50,180668;6,350901;11,1
+Kail;50,184128;7,240018;3,9
+Schönwald/Ofr.-Brunn;50,184665;12,079139;1,7
+Hohenstein-Breithardt;50,191809;8,08884;13,9
+Vilbel, Bad-Dortelweil;50,21349;8,74525;14,4
+Rehau;50,221377;12,027537;1,5
+Kleiner Feldberg/Taunus;50,221797;8,446883;17,9
+Kissingen, Bad;50,223991;10,079245;4
+Winterspelt;50,228181;6,207111;11,6
+Sulzdorf an der Lederhecke;50,241724;10,566952;3,9
+Wächtersbach;50,243548;9,289247;16,5
+Homburg, Bad (Filterwerk);50,244571;8,572503;23,5
+Oberbachheim;50,248002;7,745633;8
+Kronach;50,252352;11,320925;4,6
+Waldems-Reinborn;50,259603;8,360676;11,2
+Oberleichtersbach-Modlos;50,266144;9,772709;8,9
+Gründau-Breitenborn;50,266701;9,185383;14
+Elster, Bad-Sohl;50,27046;12,274171;0,3
+Nidderau-Erbstadt;50,27406;8,86529;8,9
+Königshofen, Bad;50,284014;10,445599;1,3
+Camberg, Bad;50,286318;8,294862;11,8
+Erlbach-Eubabrunn;50,304319;12,383436;0,3
+Lautertal-Oberlauter;50,306639;10,967938;8,4
+Lissendorf;50,310518;6,623578;10,1
+Hof;50,312257;11,876039;1,9
+Föritztal-Neuhaus-Schierschnitz;50,325038;11,239477;6
+Schlüchtern-Herolz;50,344656;9,55333;13,3
+Sandberg;50,351779;10,003374;9,4
+Holzheim bei Diez;50,357409;8,048498;13,6
+Nauheim, Bad;50,357418;8,750564;9,2
+Klingenthal-Kamerun;50,359393;12,483642;2,4
+Nürburg-Barweiler;50,360174;6,869659;2,8
+Steben, Bad;50,361759;11,622292;6,6
+Weischlitz-Heinersgrün;50,388691;11,995528;0,3
+Frankenblick-Mengersgereuth-Hämmern;50,390367;11,132363;10,8
+Runkel-Ennerich;50,393972;8,142276;10,6
+Rodder;50,396548;6,856804;2,4
+Teuschnitz;50,400246;11,38883;9,9
+Gedern-Schönhausen;50,403352;9,207585;14,4
+Hirschberg;50,404029;11,819302;1,7
+Römhild-Sülzdorf;50,409851;10,490142;1,2
+Dahlem-Schmidtheim;50,411493;6,561503;9,2
+Veilsdorf;50,41672;10,815607;8,1
+Andernach;50,423665;7,420171;3
+Fichtelberg;50,428295;12,953583;2,6
+Weilmünster;50,428377;8,380557;12,6
+Carlsfeld;50,431251;12,611421;6,1
+Föritztal-Neuenbau;50,440958;11,240055;12,1
+Lobenstein, Bad;50,450456;11,63497;3,3
+Münzenberg-Gambach;50,452232;8,731695;4,9
+Ostheim v.d. Rhön;50,453837;10,221065;2,6
+Plauen;50,481832;12,130043;0,2
+Wasserkuppe;50,497265;9,942732;5,8
+Neuhaus am Rennweg;50,500253;11,13446;13,5
+Kall-Sistig;50,50141;6,526408;3,5
+Schleusingen;50,507059;10,76198;5,8
+Hoherodskopf/Vogelsberg;50,508396;9,224634;13,6
+Waldbrunn-Lahr;50,512141;8,132635;15
+Ludwigsstadt-Lauenstein;50,513104;11,36639;5,4
+Monschau-Kalterherberg;50,520211;6,208439;20,6
+Raschau;50,521942;12,828233;0,3
+Remptendorf;50,527522;11,660464;0,6
+Birx/Rhön;50,53092;10,047947;9,4
+Neuenahr, Bad-Ahrweiler;50,534561;7,085337;1,8
+Stützengrün-Hundshübel;50,546611;12,570627;0,9
+Treuen;50,5467;12,2863;1
+Katzhütte;50,546722;11,031723;15,2
+Meiningen;50,561131;10,377137;3
+Löhnberg-Obershausen;50,561656;8,238629;17,1
+Hümmerich;50,565053;7,484345;21,2
+Fulda-Horas;50,566786;9,653221;3,6
+Schleiz;50,567906;11,804085;0
+Aßlar Klein-Altenstädten;50,579959;8,468468;6,8
+Marienberg-Rübenau;50,580331;13,296614;0,5
+Aue;50,590826;12,713873;0,1
+Ilmenau-Frauenwald;50,592106;10,857519;14,6
+Gießen/Wettenberg;50,601715;8,643898;5
+Tannenberg;50,607392;12,938954;0,1
+Petersberg-Marbach;50,617521;9,724971;4
+Deutschneudorf-Brüderwiese;50,619956;13,481701;1
+Driedorf;50,63159;8,181266;18,1
+Tann/Rhön;50,639028;10,022846;7,4
+Schwarzburg;50,64406;11,193618;1,2
+Marienberg;50,651055;13,146876;0,3
+Schmücke;50,654518;10,769601;6,5
+Langenwetzendorf-Göttendorf;50,661003;12,075583;1,2
+Marienberg, Bad;50,662061;7,960264;13,9
+Nideggen-Schmidt;50,674261;6,423998;8,8
+Krölpa-Rockendorf;50,681954;11,515024;0
+Lichtentanne;50,68786;12,432937;0,2
+Weilerswist-Lommersum;50,711886;6,790489;1,3
+Geisa;50,713334;9,953936;6,4
+Schmieritz-Weltwitz;50,728119;11,783769;1,9
+Königswinter-Heiderhof;50,729285;7,204024;13,4
+Zinnwald-Georgenfeld;50,731347;13,751612;1,7
+Martinroda;50,733481;10,881516;5,8
+Hilgenroth;50,737016;7,652531;16,7
+Haunetal-Wehrda;50,73837;9,660738;5,6
+Alsfeld-Eifa;50,744591;9,344972;5,8
+Neu-Ulrichstein;50,751337;9,022428;4,5
+Burbach-Würgendorf;50,755647;8,125655;11,5
+Uhlstädt-Kirchhasel-Niederkrossen;50,757711;11,517819;1
+Harth-Pöllnitz Neundorf;50,767557;11,980954;0,6
+Amöneburg-Rüdigheim;50,784041;8,954489;3,9
+Chemnitz;50,791286;12,871977;0,4
+Aachen-Orsbach;50,798281;6,02439;12,1
+Stadtilm-Dienstedt;50,801787;11,169196;0,1
+Sankt Egidien-Kuhschnappel;50,801951;12,636583;0,3
+Eschenburg-Eibelshausen;50,805287;8,338217;12,9
+Crimmitschau-Mannichswalde;50,813755;12,298537;0,6
+Rosenthal-Bielatal;50,837726;14,071892;0,1
+Salzungen, Bad-Gräfen-Nitzendorf;50,842634;10,251814;2,4
+Neunkirchen-Seelscheid-Krawinkel;50,844636;7,371973;19,7
+Kleiner Inselsberg;50,845847;10,480262;15,7
+Cölbe, Kr. Marburg-Biedenkopf;50,849234;8,774517;3,9
+Hersfeld, Bad;50,851957;9,737694;7,2
+Ponitz;50,85443;12,421632;0,3
+Köln/Bonn;50,864547;7,157524;17,9
+Drei Gleichen-Mühlberg;50,868082;10,821072;0,2
+Bucha;50,870041;11,502161;1,9
+Gera-Leumnitz;50,881208;12,128885;0,7
+Frankenberg-Altenhain;50,883649;13,042475;0,6
+Neukirchen-Hauptschwenda;50,89228;9,40498;6,8
+Waltershausen;50,896285;10,54834;6,7
+Bertsdorf-Hörnitz;50,899151;14,745622;1,5
+Bobeck;50,904081;11,798477;1,5
+Berka, Bad (Flugplatz);50,907455;11,266477;1,4
+Wetter/Hessen-Amönau;50,908663;8,692898;4,7
+Dippoldiswalde-Reinberg;50,911626;13,708675;0,1
+Jena (Sternwarte);50,925126;11,583023;1
+Freiberg;50,926306;13,271085;1
+Jülich (Kläranlage);50,931629;6,343119;6,9
+Lichtenhain-Mittelndorf;50,938325;14,20938;0,8
+Overath-Böke;50,965511;7,275302;22
+Gilserberg-Moischeid;50,965565;9,050014;4,8
+Gotha;50,965705;10,698824;0,9
+Crossen/Elster-Nickelsdorf;50,977077;12,004398;1,1
+Starkenberg-Tegkwitz;50,977086;12,341909;0,2
+Erfurt-Weimar;50,982887;10,960753;0,1
+Berleburg, Bad-Stünzel;50,983713;8,368331;9,1
+Köln-Stammheim;50,989428;6,977688;16,5
+Reichshof-Eckenhagen;50,990623;7,695754;12,3
+Lohmen/Sachsen;50,993291;13,980718;0
+Eisenach;51,000736;10,36211;6,8
+Wilsdruff-Mohorn;51,006309;13,471027;0,1
+Berleburg, Bad-Arfeld;51,014835;8,431837;6,8
+Bedburg-Weiler Hohenholz;51,014895;6,517327;9,9
+Weimar-Schöndorf;51,01765;11,354409;1,9
+Dresden-Hosterwitz;51,022068;13,847006;0
+Hörselberg-Hainich-Behringen;51,022141;10,514781;3,7
+Dresden-Strehlen;51,024877;13,775023;0,2
+Ostritz;51,026533;14,935677;0,1
+Burgwald-Bottendorf;51,030568;8,814605;4,4
+Zeitz;51,031411;12,14949;0,4
+Heinsberg-Schleiden;51,041072;6,104239;7
+Herleshausen-Archfeld;51,042484;10,14676;6,2
+Meuselwitz;51,045188;12,298856;0,2
+Nossen;51,050698;13,300254;0,2
+Dürrhennersdorf;51,057725;14,612784;0,4
+Sohland/Spree;51,059354;14,426617;2
+Sontra;51,060686;9,926618;9,6
+Battenberg-Hof Karlsburg;51,066152;8,537474;10,8
+Wabern-Hebel;51,067003;9,382119;3,1
+Dachwig;51,077772;10,861875;1
+Osterfeld;51,08716;11,929265;0,8
+Geringswalde-Altgeringswalde;51,088078;12,932593;0,9
+Meinerzhagen-Redlendorf;51,089851;7,628924;16,9
+Alperstedt;51,095024;11,047932;0,7
+Naumburg/Saale-Kreipitzsch;51,10439;11,711157;1,8
+Attendorn-Neulisternohl;51,114277;7,880705;8,3
+Dormagen-Zons;51,115746;6,850995;17,1
+Dresden-Klotzsche;51,127797;13,754251;0
+Klipphausen-Garsebach;51,129431;13,432783;0
+Mönchengladbach-Hilderath;51,131263;6,360819;9,5
+Lennestadt-Theten;51,133253;8,034831;3,4
+Solingen-Hohenscheid;51,14004;7,092982;19,5
+Olbersleben;51,150665;11,332074;1,8
+Südeichsfeld-Wendehausen;51,159397;10,247286;3,9
+Vöhl-Buchenberg;51,159796;8,873772;4,9
+Kubschütz, Kr. Bautzen;51,160383;14,504184;0
+Görlitz;51,162129;14,950606;0,1
+Wipperfürth-Gardeweg;51,163672;7,423388;16,8
+Medebach-Berge;51,168307;8,712524;7,1
+Pegau;51,169175;12,261667;0,6
+Kahler Asten;51,180254;8,489068;15,2
+Grimma-Kleinbothen;51,191822;12,764537;1,4
+Pulsnitz;51,200617;14,020732;0,3
+Eschwege;51,204132;10,013767;6,9
+Mühlhausen/Thüringen-Görmar;51,206117;10,497829;3,3
+Schmallenberg-Sellinghausen;51,212731;8,267235;8,5
+Wuppertal-Buchenhofen;51,225598;7,105176;18,9
+Freienbessingen;51,23266;10,769355;2,7
+Belgershain;51,235936;12,551653;1,9
+Freyburg/Unstrut-Zeuchfeld;51,237996;11,829549;0,5
+Bibra, Bad-Altenroda;51,238782;11,577004;1,7
+Waldeck-Alraft;51,24267;8,971761;3,7
+Lüdenscheid;51,245158;7,642497;7,8
+Breckerfeld-Wengeberg;51,248783;7,467166;12,8
+Eslohe;51,25399;8,15653;9,7
+Etzleben;51,260977;11,175368;0,9
+Hirschstein-Heyda;51,265101;13,358848;0
+Weißenfels-Wengelsdorf;51,274324;12,051727;0,4
+Schauenburg-Elgershausen;51,283452;9,358959;7,2
+Korbach-Rhena;51,288015;8,792783;5,1
+Tönisvorst;51,289722;6,443651;6,9
+Neuenrade-Blintrop;51,291467;7,85303;5
+Willingen/Hochsauerland;51,291529;8,598143;7,3
+Düsseldorf;51,295968;6,768626;14,3
+Oschatz;51,29598;13,09283;0,1
+Nettetal-Hülst;51,299239;6,20126;7,9
+Markranstädt-Großlehna;51,308993;12,171838;0,7
+Kamenz-Cunnersdorf;51,312224;14,049887;0,2
+Leipzig-Holzhausen;51,31509;12,446226;3
+Gevelsberg-Oberbröking;51,332887;7,341174;9,6
+Helbedündorf-Keula;51,333985;10,528996;3,1
+Twistetal-Mühlhausen;51,3344;8,913191;3,9
+Arolsen-Landau, Bad;51,343117;9,076333;3,9
+Hähnichen-Trebus;51,344466;14,838693;0,2
+Großenhain-Strauch;51,36578;13,580054;0,1
+Sondershausen;51,369118;10,88001;1,7
+Artern;51,374418;11,291962;0,9
+Querfurt-Mühle Lodersleben;51,389498;11,541221;1
+Lauchstädt, Bad;51,39092;11,878575;0
+Leinefelde;51,393197;10,312349;3,9
+Boxberg;51,404082;14,568144;0,2
+Essen-Bredeney;51,404085;6,967741;12,4
+Brilon-Thülen;51,413998;8,649983;5,6
+Reinholterode;51,424764;10,189764;6,1
+Warstein-Hirschberg;51,431882;8,266476;10
+Leipzig/Halle;51,434711;12,239585;3,2
+Hoyerswerda;51,449238;14,25327;0,1
+Grebenstein;51,451068;9,413796;5,3
+Eilenburg;51,460338;12,668652;0,4
+Arnsberg-Neheim;51,46332;7,97797;5
+Diemelstadt-Rhoden;51,47426;9,003906;7,8
+Reinhardshagen-Vaake;51,484127;9,612059;11,3
+Liebenau-Haueda;51,4882;9,249252;4,7
+Geldern-Walbeck;51,494168;6,246343;6,4
+Rüthen;51,496642;8,434191;6,3
+Göttingen;51,500248;9,950659;4,8
+Bochum;51,502642;7,228914;4,9
+Warburg;51,50392;9,111774;5,9
+Duisburg-Baerl;51,508794;6,701773;10,5
+Schönwölkau-Brinnis;51,517074;12,436159;0,9
+Klitzschen bei Torgau;51,518528;12,906488;0,2
+Dransfeld-Ossenfeld;51,526295;9,797802;6
+Südharz-Dietersdorf;51,530667;11,045651;3,6
+Seegebiet Mansfelder Land-Dederstedt;51,542637;11,694748;0,5
+Wünnenberg-Eilern;51,542692;8,778413;8
+Sassendorf, Bad-Beusingsen;51,543948;8,180815;4,4
+Mansfeld-Annarode;51,550413;11,40297;0,7
+Schipkau-Klettwitz;51,555433;13,884528;1,2
+Muskau, Bad;51,565979;14,70081;0,2
+Borgentreich;51,567659;9,232377;4,2
+Spremberg-Graustein;51,571768;14,476326;0
+Gelsenkirchen-Buer;51,576234;7,065182;9,7
+Werl;51,576347;7,887922;3
+Dinslaken;51,576478;6,784929;11,4
+Trendelburg;51,577732;9,433693;8,9
+Ellrich-Werna;51,583452;10,709031;5,8
+Lauterberg,Bad-Bartolfelde;51,595667;10,462967;8,9
+Waltrop-Abdinghof;51,596642;7,404843;3,7
+Wesertal-Lippoldsberg;51,61941;9,57491;7,9
+Herzberg;51,625476;10,369512;9,9
+Lippstadt-Bökenförde;51,633617;8,39445;5
+Doberlug-Kirchhain;51,645071;13,574714;0,7
+Harzgerode;51,651967;11,136645;1,3
+Oberharz am Brocken-Stiege;51,664645;10,881071;3,7
+Jeßnitz;51,681752;12,305347;1,8
+Berka;51,684172;10,107803;7,2
+Herzberg-Lonau;51,688976;10,357102;14,3
+Bodenfelde-Amelith;51,695724;9,513524;10,4
+Xanten;51,696974;6,39741;7,7
+Brakel;51,704894;9,173804;6,3
+Olfen;51,706577;7,356366;4,7
+Salzkotten;51,709756;8,579609;7,6
+Braunlage;51,723383;10,602109;10,6
+Aschersleben-Mehringen;51,725946;11,510942;4,9
+Köthen (Anhalt);51,751087;12,009351;1,7
+Kemberg-Radis;51,755677;12,510429;0,3
+Drensteinfurt;51,758488;7,752784;3,2
+Kleve;51,761242;6,095381;7,6
+Northeim-Imbshausen;51,763036;10,041607;7,4
+Hohenbucko;51,764009;13,469979;0,4
+Wernigerode-Schierke;51,765838;10,65328;6,7
+Lüdinghausen-Brochtrup;51,766342;7,519387;3,8
+Cottbus;51,775938;14,316799;0
+Delbrück;51,783521;8,565808;9
+Lippspringe, Bad;51,785416;8,838795;16,8
+Quedlinburg;51,795344;11,131995;3
+Lübbenau/Spreewald-Bischdorf;51,798153;13,971648;0,1
+Brocken;51,798615;10,61828;4,7
+Reken;51,811752;7,090713;8,7
+Bernburg/Saale (Nord);51,821792;11,71098;1,6
+Bocholt-Liedern (Wasserwerk);51,8293;6,53651;7,7
+Ennigerloh-Ostenfelde;51,841775;8,060717;5,7
+Wernigerode;51,84544;10,768627;1
+Bevern, Kr. Holzminden;51,85294;9,495274;5,1
+Lügde-Paenbruch;51,866393;9,271007;6,8
+Borken in Westfalen;51,873046;6,886297;9,1
+Hecklingen-Groß Börnecke;51,88055;11,464968;2,4
+Eimen-Vorwohle;51,887336;9,727987;4,9
+Wittenberg;51,889124;12,644598;0
+Harzburg, Bad;51,900249;10,569851;1,4
+Seesen;51,903979;10,188488;7,5
+Langenlipsdorf;51,917335;13,087762;0,1
+Jessen (Elster)-Naundorf;51,924458;12,888843;0
+Langelsheim-Astfeld;51,926175;10,346131;6,4
+Düben;51,926477;12,385221;0,2
+Lübben-Blumenfelde;51,926694;13,879715;0
+Sargstedt;51,937541;10,989739;5,7
+Lage, Kreis Lippe-Hörste;51,944572;8,774854;15,6
+Ottenstein;51,94726;9,399808;5,7
+Walternienburg-Ronney;51,961014;11,915903;1,1
+Coesfeld;51,96175;7,158484;6,3
+Alfeld;51,964331;9,80717;6,8
+Harsewinkel;51,975316;8,209404;7,1
+Lieberose;51,986088;14,304403;0,1
+Osterwieck-Rimbeck;51,999681;10,632689;3,8
+Ostbevern-Schirlheide;52,008733;7,851948;5,3
+Coschen;52,019184;14,725442;0
+Wanzleben-Börde / Klein Germersleben;52,01934;11,40593;3,2
+Badewitz bei Zerbst;52,022318;12,159693;1
+Huy-Pabstorf;52,030421;10,962603;5,9
+Baruth;52,061303;13,499731;0
+Bielefeld-Deppendorf;52,071449;8,456493;9,9
+Ahaus;52,0813;6,940893;7,8
+Hameln-Hastenbeck;52,081826;9,407661;3,1
+Felgentreu;52,099737;13,001629;0,1
+Magdeburg;52,102896;11,582674;2,4
+Rothenfelde, Bad;52,103808;8,180881;7,2
+Salzuflen, Bad;52,104207;8,752053;6
+Steinfurt-Burgsteinfurt;52,117259;7,341055;6,2
+Wiesenburg;52,120644;12,458559;0,1
+Lienen-Kattenvenne;52,121146;7,869893;5,9
+Königsborn;52,133061;11,775702;1,9
+Münster/Osnabrück;52,134375;7,696859;4,3
+Rinteln-Volksen;52,13836;9,111947;5,4
+Münchehofe;52,148833;13,835873;0
+Enger;52,150023;8,522574;4,9
+Ummendorf;52,160107;11,17586;3,5
+Brück-Gömnigk;52,169188;12,733336;0
+Pohlitz;52,183643;14,574787;0
+Hohe Börde-Schackensleben;52,197954;11,421824;2,2
+Springe;52,205394;9,566817;4,7
+Lindenberg;52,208489;14,118032;0
+Möckern-Drewitz;52,217417;12,164088;0,8
+Hörstel-Riesenbeck;52,239575;7,64486;6,7
+Cremlingen-Destedt;52,244852;10,718235;0,1
+Helmstedt-Emmerstedt;52,246687;10,959207;5
+Thyrow;52,253376;13,236146;0
+Wollin;52,28129;12,458046;0
+Westerkappeln;52,290208;7,868747;9,2
+Braunschweig;52,291469;10,446448;4,9
+Zielitz;52,299428;11,67331;3,4
+Bentheim, Bad;52,301792;7,130106;8,3
+Belm;52,317043;8,16943;5
+Barsinghausen-Hohenbostel;52,319851;9,42997;4,3
+Burg-Blumenthal;52,324068;11,833933;2,1
+Essen-Brockhausen, Bad;52,334533;8,38774;4,8
+Espelkamp-Isenstedt;52,345157;8,647666;2,8
+Wusterwitz;52,361279;12,386733;0,2
+Neu Madlitz;52,365259;14,247393;0
+Ostercappeln-Schwagstorf;52,365638;8,201145;5,8
+Lehrte-Sievershausen;52,366648;10,126468;5,8
+Hannover-Kirchrode;52,367103;9,819005;8
+Westheide-Born;52,374468;11,465476;3
+Berlin Brandenburg;52,380702;13,530576;0
+Potsdam;52,381247;13,06223;0,1
+Petershagen;52,3817;9,017551;5,8
+Genthin;52,387511;12,160174;1
+Hannover-Herrenhausen;52,396469;9,662863;4,4
+Oebisfelde-Weferlingen-Bösdorf;52,415269;11,075762;4,4
+Groß Kreutz-Krielow;52,416907;12,800607;0,2
+Tangerhütte-Grieben;52,423322;11,96596;1,6
+Rehburg-Loccum;52,439577;9,133518;5,2
+Rahden-Kleinendorf;52,446122;8,590574;3,7
+Uetze;52,458765;10,188826;5,6
+Hannover;52,464428;9,677906;5
+Berlin-Tempelhof;52,467551;13,401981;0
+Alfhausen;52,485322;7,912544;8,2
+Neustadt am Rübenberge;52,499967;9,494071;5
+Demker;52,507485;11,855089;2
+Lingen-Baccum;52,512631;7,413109;7,2
+Fürstenau;52,515965;7,676221;7,8
+Müncheberg;52,517588;14,123226;0
+Köckte;52,523331;11,126104;4,1
+Staaken;52,540408;13,124293;0
+Manschnow;52,546778;14,54525;0
+Ahrensfelde;52,585015;13,563378;0
+Diepholz;52,588112;8,342405;5,7
+Wedemark-Elze;52,588296;9,73857;5,7
+Strausberg;52,588376;13,928872;0
+Ringe-Großringe;52,598302;6,944915;6,2
+Kirchdorf, Kreis Diepholz;52,600709;8,852192;6,4
+Celle (Stadt);52,614642;10,072598;5,1
+Berge;52,619829;12,786684;0,2
+Berlin-Buch;52,630956;13,502135;0
+Wittingen-Vorhop;52,642294;10,662762;5,5
+Marwitz (Wasserwerk);52,657941;13,178961;0,1
+Schollene;52,662966;12,181243;1,3
+Nienburg;52,671092;9,222894;5,5
+Dinklage;52,67462;8,113724;4,9
+Essel;52,679692;9,652352;6,4
+Barnstorf;52,696508;8,486956;5,4
+Kremmen-Groß Ziethen;52,72774;13,012119;0,2
+Osterburg (Altmark)-Ballerstedt;52,732076;11,712319;3,3
+Scharnhorst-Marwede;52,736346;10,344026;5,3
+Kleßen;52,739049;12,498366;0,5
+Twist-Hebelermeer;52,743015;7,07542;6,1
+Heckelberg;52,746142;13,842702;0
+Hohenberg-Krusemark-Schwarzholz;52,747017;11,97918;2,3
+Diesdorf;52,752218;10,88308;6
+Groß Berßen;52,755286;7,481492;7,1
+Wustrow;52,760573;14,217398;0
+Frankenfeld-Hedern;52,765862;9,404613;5,7
+Fallingbostel, Bad;52,856783;9,67563;8,8
+Bassum;52,86303;8,698853;5,9
+Seehausen;52,891088;11,729659;2,9
+Schwarme;52,908108;9,045152;4,4
+Schorfheide-Groß Schönebeck;52,909373;13,537061;0
+Großenkneten;52,933593;8,237018;6,1
+Kyritz;52,936248;12,409335;1,1
+Uelzen;52,941435;10,528857;3,2
+Neuruppin-Alt Ruppin;52,943711;12,851826;0,4
+Dörpen;52,954199;7,319679;5,8
+Verden-Dauelsen;52,958617;9,226861;6,8
+Soltau;52,960408;9,793049;7,7
+Zehdenick;52,96635;13,326752;0
+Lüchow;52,972379;11,137371;4
+Friedrichswalde;53,023826;13,708829;0,1
+Angermünde;53,031558;13,99082;0
+Berkholz-Meyenburg;53,044332;14,242298;0,1
+Bremen;53,04507;8,798084;5,2
+Neuruppin-Gühlen Glienicke;53,052813;12,756219;1
+Friesoythe-Altenoythe;53,064301;7,901969;6,1
+Zernien;53,070402;10,883125;6,5
+Rehlingen-Ehlbeck;53,085885;10,161061;5,2
+Perleberg;53,095176;11,860293;3,4
+Lenzen/Elbe;53,100708;11,486414;4,2
+Stechlin-Menz;53,101974;13,042072;0,2
+Hude/Oldenburg;53,122799;8,42046;6,7
+Rotenburg (Wümme);53,128923;9,339795;7,4
+Ottersberg-Otterstedt;53,140299;9,151689;7,9
+Kuhbier;53,148574;12,085143;1,7
+Karstädt/Prignitz;53,172426;11,749132;3,4
+Mittenwalde/Uckermark;53,184585;13,654515;0,2
+Wittstock-Rote Mühle;53,186436;12,494939;1
+Wendisch Evern;53,213878;10,470375;3,5
+Malk Göhren;53,214097;11,368558;4,6
+Hohenreinkendorf;53,225167;14,329961;0,1
+Königsmoor;53,227933;9,652723;7,1
+Dollart-Kanalpolder;53,228884;7,219053;6
+Schwanewede-Neuenkirchen;53,233771;8,51153;5,9
+Bleckede-Walmsburg;53,240142;10,852162;4,3
+Rastede;53,242759;8,223641;9,2
+Westerstede;53,250375;7,934993;7,9
+Grabow (Kläranlage Fahlenkamp);53,265138;11,504213;3,8
+Krümmel;53,268105;12,722084;0,7
+Worpswede-Hüttenbusch;53,275827;8,985687;8,1
+Heeslingen-Wiersdorf;53,298853;9,335125;7,1
+Meyenburg;53,308318;12,293694;0,9
+Moormerland-Neermoor;53,310978;7,432904;7,1
+Grünow;53,315357;13,933856;0,2
+Marnitz;53,32222;11,932143;2,7
+Redefin;53,346894;11,199183;3,8
+Rosengarten-Klecken;53,3629;9,943511;5,2
+Bockhorn-Grabstede;53,367048;7,967927;9
+Ovelgönne;53,381903;8,449286;6,7
+Grambow-Schwennenz;53,383698;14,372801;0,4
+Emden;53,388122;7,228716;7,1
+Boizenburg;53,391093;10,68781;2,5
+Beverstedt;53,425244;8,804026;9,4
+Uckerland-Karlstein;53,427726;13,816671;0,8
+Bremervörde;53,445118;9,13903;9
+Neustadt-Glewe-Friedrichsmoor;53,457104;11,568696;2,6
+Plau am See;53,458432;12,241705;1,5
+Hamburg-Neuwiedenthal;53,477585;9,895741;5,2
+Butjadingen-Inte;53,492638;8,376849;5,1
+Dodow;53,503518;11,00137;5,9
+Norden-Leybuchtpolder;53,503894;7,121735;9,6
+Jork-Moorende;53,508338;9,737635;9,2
+Waren (Müritz);53,519622;12,665404;1
+Penzlin-Groß Lukow;53,525457;13,016084;0,5
+Bremerhaven;53,53321;8,576089;8,4
+Goldenbow;53,538852;11,7607;3,2
+Mittelnkirchen-Hohenfelde;53,553423;9,609747;7,3
+Grambek;53,573115;10,679686;5
+Rothemühl;53,595357;13,812134;0,8
+Borkum-Flugplatz;53,598385;6,702417;7
+Trollenhagen;53,599793;13,303907;0,5
+Goldberg;53,605834;12,103404;2,1
+Hamburg-Fuhlsbüttel;53,633172;9,988102;5,3
+Lamstedt;53,636892;9,097868;8,5
+Wangerland-Hooksiel;53,641065;8,08086;6
+Schwerin;53,642425;11,387095;2,9
+Dornum;53,645983;7,430158;9,4
+Friedland;53,655726;13,536919;0,2
+Sprenge;53,68927;10,365697;4,4
+Steinau, Kr. Cuxhaven;53,694592;8,873533;7,4
+Langen-Holßel, Kreis Cuxhaven;53,695623;8,629108;6,6
+Drochtersen;53,711752;9,379085;6,5
+Norderney;53,712304;7,151923;5,7
+Quickborn;53,733089;9,87757;7,2
+Rathebur;53,740917;13,790639;0,6
+Ueckermünde;53,744455;14,069809;0,6
+Carlow;53,757531;10,928814;4,1
+Teterow;53,761035;12,557375;1,1
+Ventschow;53,778422;11,55948;4,4
+Lübeck-Blankensee;53,802512;10,698941;3,1
+Borrentin-Wolkwitz;53,808029;12,960697;0,6
+Parum;53,811914;12,113984;2,5
+Baumgarten;53,814876;11,88179;4,2
+Gülzow-Prüzen;53,817775;12,064513;2,8
+Freiburg/Elbe;53,827696;9,249276;6,6
+Grevesmühlen;53,831209;11,171278;3,1
+Anklam;53,840867;13,685443;0,5
+Cuxhaven;53,871341;8,706028;8,5
+Schmarsow;53,875346;13,210143;1,2
+Weddelbrook;53,900473;9,830793;5,7
+Wittenborn;53,922412;10,226738;3,2
+Schwartau,Bad -Groß Parin;53,938481;10,698267;1,5
+Dewichow;53,949655;13,97418;0,8
+Itzehoe;53,989731;9,569692;7,6
+Kirchdorf/Poel;53,999513;11,434142;1,1
+Boltenhagen;54,002724;11,19082;0,7
+Hasenkrug-Hardebek;54,00385;9,855495;5,1
+Groß Kiesow-Schlagtow;54,011742;13,499925;1,8
+Padenstedt (Pony-Park);54,018844;9,925507;3,6
+Wacken;54,0246;9,387966;7,3
+Tribsees;54,065427;12,765454;2,2
+Elpersbüttel;54,069146;9,010547;8
+Groß Lüsewitz;54,071364;12,323764;2,8
+Gersdorf;54,080548;11,74249;1,2
+Pelzerhaken;54,08933;10,877341;0,4
+Greifswald;54,096704;13,405565;2,2
+Süderholz-Neuendorf;54,103401;13,15331;2,9
+Karlshagen;54,104896;13,823906;1,2
+Dörnick;54,165444;10,351887;1
+Haale;54,169524;9,555852;3,1
+Helgoland;54,174971;7,891995;7,2
+Rostock-Warnemünde;54,180279;12,080806;0,9
+Greifswalder Oie;54,24373;13,910203;0,8
+Steinhagen-Negast;54,248381;13,041864;1,5
+Erfde;54,299212;9,316185;5,8
+Ostenfeld (Rendsburg);54,319385;9,80512;2,3
+Hohwacht;54,319391;10,673193;0,7
+Krempel;54,323692;9,024711;9
+Sankt Peter-Ording;54,327907;8,603056;6,1
+Barth;54,340527;12,710848;1,2
+Köhn;54,344412;10,458082;0,7
+Putbus;54,364277;13,477079;1,7
+Großenbrode;54,372582;11,082818;0,4
+Kiel-Holtenau;54,377582;10,142375;0,7
+Groß Wittensee;54,403194;9,765426;3
+Sagard;54,515937;13,530523;0,9
+Hattstedt;54,526755;9,042461;6,9
+Schleswig;54,527539;9,548666;4,6
+Fehmarn;54,528292;11,060556;0,4
+Hiddensee-Vitte;54,574966;13,104408;0,9
+Eggebek;54,62823;9,364924;5
+Bordelum;54,632756;8,936989;5,9
+Schönhagen (Ostseebad);54,640986;10,02377;0,6
+Arkona;54,679109;13,434416;0,8
+Satrup;54,685407;9,6261;2,4
+Wrixum/Föhr;54,692781;8,527128;5
+Leck;54,790294;8,951446;6,4
+Weesby;54,837286;9,148066;5,5
+List auf Sylt;55,010989;8,412531;3,4
