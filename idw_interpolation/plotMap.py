@@ -21,7 +21,9 @@ image_config = {
     "tmp_dir": f"{os.getcwd()}/tmp/",					# Verzeichnis für Zwischenergebnisse
     "latitude_raster_file": "lat.csv",					# Datei mit den Breitengraden des Rasters
     "longitude_raster_file": "lon.csv",					# Datei mit den Längengraden des Rasters
-    "value_raster_file": "interpolRaster_c.csv",			# Datei mit den interpolierten Rasterwerten 
+    "value_raster_file": "interpolRaster.csv",				# Datei mit den interpolierten Rasterwerten
+    "input_csv_data_dir": f"{os.getcwd()}/input/",			# directory of input file
+    "input_csv_data_file": f"tagessummen_452.csv",				# filename of input file 
     "germany_shapefile": f"{os.getcwd()}/ger_shapefile/germany.shp",	# Shapefile zum erstellen der Maske
     "germany_mask": f"{os.getcwd()}/ger_mask/germany.png",		# Maske zum Ausschneiden des Bildes
     "image_dpi": 300,							# Auflösung des Bildes
@@ -51,6 +53,9 @@ class InterpolMap():
         self.latitude_raster_file = image_config.get("latitude_raster_file")
         self.longitude_raster_file = image_config.get("longitude_raster_file")
         self.value_raster_file = image_config.get("value_raster_file")
+        self.input_csv_data_dir = image_config.get("input_csv_data_dir")
+        self.input_csv_data_file = image_config.get("input_csv_data_file")
+        self.input_csv_data_tbl = False
         self.germany_shapefile = image_config.get("germany_shapefile")
         self.germany_mask = image_config.get("germany_mask")
         self.image_dpi = image_config.get("image_dpi")
@@ -88,8 +93,26 @@ class InterpolMap():
             return {"success": False, "err": e, "msg": traceback.format_exc()}    
 
 
+    def read_csv_input_data(self):
+    
+        """
+            Ließt die Messwerte aus der csv - Datei ein.
+        """
 
-
+        try:
+        
+            if (self.input_csv_data_file in os.listdir(self.input_csv_data_dir)):
+            
+                self.input_csv_data_tbl = pd.read_csv(os.path.join(self.input_csv_data_dir, self.input_csv_data_file), sep=";", decimal=",", encoding='unicode_escape');
+            
+                print(self.input_csv_data_tbl);
+            
+                return {"success": True}
+            else:
+                raise Exception("Fehler!", f"{self.input_csv_data_file} nicht in {self.input_csv_data_dir} vorhanden!")
+        
+        except Exception as e:
+            return {"success": False, "err": e, "msg": traceback.format_exc()}
 
 
     def read_rasters(self):
@@ -218,15 +241,43 @@ class InterpolMap():
                 ax = plt.axes(projection=self.image_proj)
                 ax.set_extent(self.image_extents)
             
+                for row in self.input_csv_data_tbl.itertuples(name='Pandas'):
+                    #ax.plot(row.lon, row.lat, 'x', color='#FFFFFF', markersize=0.2, transform = ccrs.Geodetic())
+                    ax.text(round(row.lon,1), round(row.lat,1), row.value, color='#000000', size=2, transform = ccrs.Geodetic())
+                 
+            
                 # Das Raster anhand der Koordinaten-Arrays auf die Basemap plotten:
                 im = plt.pcolormesh(self.lon_raster, 
                                     self.lat_raster, 
                                     self.value_raster, 
-                                    cmap='YlGnBu_r', 
+                                    #cmap='summer',
+                                    cmap='plasma_r',
                                     vmax=np.amax(self.value_raster), 
                                     vmin=np.amin(self.value_raster), 
                                     transform=self.image_transform)        
             
+            
+                # Erstelle die 5'er Intervall-Level für die Contourlines:
+                #lvls1 = np.arange(0, 30, 5)
+                
+                # Zeichne die 5'er Intervall-Level:
+                #contour1 = plt.contour(self.lon_raster, self.lat_raster, self.value_raster, levels=lvls1, colors='#242424', linewidths=0.1, transform=ccrs.PlateCarree())
+
+                # Zeichne die Labels der 5'er Intervall-Level:
+                #clabels1 = plt.clabel(contour1, inline=True, fontsize=5, fmt="%d", colors='#242424', rightside_up=True, use_clabeltext=True) 
+           
+                # Rotiere alle labels so, dass sie aufrecht stehen::
+                #for label in contour1.labelTexts:
+                    #label.set_rotation(0)
+
+
+                # Erstelle die 1'er Intervall-Level für die Contourlines, entferne aber die 5'er Intervalle:
+                #lvls2 = [item for item in np.arange(0, 30, 0.5) if item % 5 != 0]
+
+                # Zeichne die 1'er Intervall-Level:
+                #contour2 = plt.contour(self.lon_raster, self.lat_raster, self.value_raster, levels=lvls2, linestyles="dotted", colors='#242424', linewidths=0.1, transform=ccrs.PlateCarree())
+                
+                
                 # Entferne den Rahmen um die Karte:
                 ax.axis("off")
             
@@ -277,13 +328,22 @@ def create_image(image_config):
         
         if (properties_shown.get("success")):
         
-            rasters_read = Map.read_rasters()
+            csv_read = Map.read_csv_input_data()
         
         else:
             raise Exception(properties_shown.get('err'), properties_shown.get('msg'))
             
         #==============================================================================            
-            
+           
+        if (csv_read.get("success")):
+        
+            rasters_read = Map.read_rasters()
+        
+        else:
+            raise Exception(csv_read.get('err'), csv_read.get('msg'))        
+           
+        #==============================================================================
+                    
         if (rasters_read.get("success")):
         
             image_created = Map.create_image()

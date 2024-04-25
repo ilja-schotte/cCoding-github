@@ -552,37 +552,54 @@ int interpolate_raster(struct usr_map *Map){
 
     int idx, jdx, kdx, ldx;
     int excno;
+    int value_cnt=0;
     jmp_buf env;
     
-    double dist_nenner, i_value, dist_zaehler, weight, value;
+    double weight_denom, weight_counter;
     
     if ((excno = setjmp(env)) == 0){   
     
+        if (Map->show_output){
+            printf("\n");
+            printf("interpolating ...         ");
+            fflush(stdout);
+        }
+    
         for (idx=0; idx<Map->rows; idx++){
-        
-            printf("%.6f\n", ((double)idx/(double)Map->rows)*100.0);
-            
             for (jdx=0; jdx<Map->cols; jdx++){
+            
+                value_cnt++;
+            
+                if (Map->show_output){
+                    printf("\b\b\b\b\b\b\b\b\b");
+                    fflush(stdout);                   
+                    printf(" %5.1f %% ", ((value_cnt*1.0)/(Map->rows*Map->cols*1.0)*100.0));               
+                    fflush(stdout);
+                }             
+            
+            
             
                 // interpolate if value of raster point is lower then 0:
                 if (Map->raster[idx][jdx].value < 0){
                 
+                    // set the value for that point to 0:
                     Map->raster[idx][jdx].value = 0;
+                    
+                    // calculate the denominator of the weight:
+                    weight_denom = 0;                  
+                    for (kdx=0; kdx<Map->input_data.length; kdx++){
+                        weight_denom += 1/pow(calc_distance(Map->raster[idx][jdx].lat, Map->raster[idx][jdx].lon, 
+                                                            Map->input_data.data[kdx].lat, Map->input_data.data[kdx].lon), Map->config._exp);    
+                    }
                     
                     // over all input data points
                     for (kdx=0; kdx<Map->input_data.length; kdx++){
                     
-                        // distanz zu den messpunkten
-                        dist_zaehler = 1/pow(calc_distance(Map->raster[idx][jdx].lat, Map->raster[idx][jdx].lon, 
-                                                           Map->input_data.data[kdx].lat, Map->input_data.data[kdx].lon), 2);
+                        // distance to every point (counter)
+                        weight_counter = 1/pow(calc_distance(Map->raster[idx][jdx].lat, Map->raster[idx][jdx].lon, 
+                                                           Map->input_data.data[kdx].lat, Map->input_data.data[kdx].lon), Map->config._exp);
                         
-                        dist_nenner = 0;                  
-                        for (ldx=0; ldx<Map->input_data.length; ldx++){
-                            dist_nenner += 1/pow(calc_distance(Map->raster[idx][jdx].lat, Map->raster[idx][jdx].lon, 
-                                                               Map->input_data.data[kdx].lat, Map->input_data.data[kdx].lon), 2);    
-                        }
-                        
-                        Map->raster[idx][jdx].value += (dist_zaehler / dist_nenner) * Map->input_data.data[kdx].value;
+                        Map->raster[idx][jdx].value += (weight_counter / weight_denom) * Map->input_data.data[kdx].value;
                     }
                 }
                 else{
@@ -599,6 +616,299 @@ int interpolate_raster(struct usr_map *Map){
             default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
         }
     } 
+}
+
+
+// ##################################################################################################
+// ##################################################################################################
+
+
+int get_output_information(struct usr_map *Map){
+
+    /*
+    
+        DESCRIPTION:
+        Calculates/determines additional information of the output raster.
+        
+        INPUT:
+        struct usr_map *Map	...	pointer to the map object
+        
+        OUTPUT: (error code)
+        on success		...	EXIT_SUCCESS
+        on failure		...	EXIT_FAILURE
+        
+    */
+    
+    int idx, jdx;
+    int excno;
+    jmp_buf env;
+    
+    if ((excno = setjmp(env)) == 0){
+    
+        double sum=0;
+    
+        // determine the maximum and minimum value of the raster:
+        Map->output_data.maximum = Map->raster[0][0].value;
+        Map->output_data.minimum = Map->raster[0][0].value; 
+        Map->output_data.average = Map->raster[0][0].value; 
+       
+        for (idx=0; idx<Map->rows; idx++){
+    
+            for (jdx=0; jdx<Map->cols; jdx++){
+        
+                if (Map->raster[idx][jdx].value > Map->output_data.maximum){
+            
+                    Map->output_data.maximum = Map->raster[idx][jdx].value;
+                }
+            
+                if (Map->raster[idx][jdx].value < Map->output_data.minimum){
+            
+                    Map->output_data.minimum = Map->raster[idx][jdx].value;
+                
+                }
+            
+                sum += Map->raster[idx][jdx].value;
+           }
+    
+        }
+    
+        Map->output_data.average = sum / (double)(Map->rows * Map->cols);
+        
+        return EXIT_SUCCESS;
+    }
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
+    }    
+}
+
+
+// ##################################################################################################
+// ##################################################################################################
+
+
+int show_map_info(struct usr_map *Map){
+
+    /*
+    
+        DESCRIPTION
+        Show information to the current interpolated raster.
+        
+        INPUT:
+        struct usr_map *Map	...	pointer to the map object
+        
+        OUTPUT: (error code)
+        on success		...	EXIT_SUCCESS
+        on failure		...	EXIT_FAILURE
+        
+    */
+
+    jmp_buf env;
+    int excno;
+    
+    if ((excno = setjmp(env)) == 0){
+    
+        if (Map->show_output){
+            printf("\n\n");
+            printf("############### INFORMATION ##############\n\n");
+            printf("   Geogr. latitude: %.3f (minimum)\n",Map->minLat);
+            printf("   Geogr. latitude: %.3f (maximum)\n",Map->maxLat);   
+            printf("   Geogr. longitude: %.3f (minimum)\n",Map->minLon);
+            printf("   Geogr. longitude: %.3f (maximum)\n\n",Map->maxLon);    
+            printf("\n");    
+            printf("   Number of raster points: %d\n", (Map->rows)*(Map->cols));
+            printf("   Rows: %d\n", Map->rows);
+            printf("   Columns: %d\n", Map->cols); 
+            printf("\n");    
+            printf("   Resolution (latitude): %.3f\n", Map->latRes);
+            printf("   Resolution (longitude): %.3f\n", Map->lonRes); 
+            printf("   Resolution (latitude, km): %.3f\n", Map->latMetRes);
+            printf("   Resolution (longitude, km): %.3f\n", Map->lonMetRes);  
+            printf("\n");    
+            printf("   --------------input data---------------\n\n");
+            printf("   Number of measured values: %d\n", Map->input_data.length);
+            printf("   Maximum: %.3f\n", Map->input_data.maximum);
+            printf("   Minimum: %.3f\n", Map->input_data.minimum);
+            printf("   Average: %.3f\n", Map->input_data.average);
+            printf("\n");
+            printf("   --------------output data--------------\n\n");
+            printf("   Maximum: %.3f\n", Map->output_data.maximum);
+            printf("   Minimum: %.3f\n", Map->output_data.minimum);
+            printf("   Average: %.3f\n", Map->output_data.average);
+            printf("\n");    
+            printf("##########################################\n\n");          
+        }
+        
+        return EXIT_SUCCESS;
+    }
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
+    }   
+}
+
+
+// ##################################################################################################
+// ##################################################################################################
+
+
+int outputRasterCSV(struct usr_data_point **raster, char *output_dir, char *filename, int rows, int cols, bool show_output){
+
+    /*
+    
+        DESCRIPTION:
+        This function outputs 3 csv-files.
+        1.	csv-file with the values of the raster in dimensions of rows x cols.
+        2.	csv-file with the latitude values of the values in dimensions of Map.rows x Map.cols.
+        3.	csv-file with the longitude values of thevalues in dimensions of Map.rows x Map.cols.
+        
+        INPUT:
+        struct usr_data_point **raster	...	pointer to the matrix you want to output of type struct usr_data_point.
+        char *output_dir		...	directory you want to output the data
+        char *filename			...	filename of the csv-file
+        int rows			...	number of rows of the raster
+        int cols			...	number of columns of the raster
+        
+    */
+
+
+
+    int idx, jdx, kdx;
+    int excno;
+    jmp_buf env;
+    
+    if ((excno = setjmp(env)) == 0){
+    
+        char valueText[20], latText[20], lonText[20];
+        char path[100];
+    
+        FILE *fp_values, *fp_lat, *fp_lon;
+    
+    
+        if ((rows<=0) || (cols<=0)){
+            longjmp(env, 1);        
+        }
+    
+        // file pointer to the values csv file:
+        fp_values = fopen(strcat(strcpy(path, output_dir), filename),"w");
+        if (fp_values == NULL){
+            longjmp(env, 2);
+        }
+        
+        // file pointer to the latitude csv file:
+        fp_lat = fopen(strcat(strcpy(path, output_dir), "lat.csv"),"w");
+        if (fp_lat == NULL){
+            longjmp(env, 3);
+        }
+    
+        // file pointer to the csv file for the longitude values:  
+        fp_lon = fopen(strcat(strcpy(path, output_dir), "lon.csv"),"w");
+        if (fp_lon == NULL){
+            longjmp(env, 2);
+        }
+
+        // show output?
+        if (show_output){
+            printf("\nwriting csv files to:\n");
+            printf(">>> %s\n", output_dir);
+            
+            printf("writing ... ");
+            fflush(stdout);
+        }
+    
+        
+        for (idx=0; idx<rows; idx++){
+            for (jdx=0; jdx<cols; jdx++){
+            
+                // pass the value to a field of type char:
+                sprintf(valueText,"%.3f", raster[idx][jdx].value);
+                
+                // pass the latitude to a field of type char:
+                sprintf(latText, "%.4f", raster[idx][jdx].lat);
+                
+                // pass the longitude to a field of type char:
+                sprintf(lonText, "%.4f", raster[idx][jdx].lon);
+                
+                
+                // check for points and change them to comma
+                for (kdx=0; kdx<(int)strlen(valueText); kdx++){
+                
+                    if (valueText[kdx] == ','){
+                    
+                        valueText[kdx] = '.';
+                        break;
+                    }
+                
+                }
+                // write that value into the file
+                fprintf(fp_values,"%s",valueText);
+
+
+                // check for points and change them to comma
+                for (kdx=0; kdx<(int)strlen(latText); kdx++){
+                
+                    if (latText[kdx] == ','){
+                    
+                        latText[kdx] = '.';
+                        break;
+                    }
+                }
+                // write that latitude into the file               
+                fprintf(fp_lat,"%s",latText);
+
+                // check for points and change them to comma
+                for (kdx=0; kdx<(int)strlen(lonText); kdx++){
+                
+                    if (lonText[kdx] == ','){
+                    
+                        lonText[kdx] = '.';
+                        break;
+                    }
+                }
+                // write that longitude into the file                
+                fprintf(fp_lon,"%s",lonText);
+                
+                // add a semicolon to the line until ... 
+                if (jdx != (cols-1)){
+                
+                    fprintf(fp_values,"%s",";");
+                    fprintf(fp_lat,"%s",";");    
+                    fprintf(fp_lon,"%s",";");
+                    
+                }
+                else{
+                    // ... we finish that line, than add a newline sign:
+                    fprintf(fp_values, "%s", "\n");
+                    fprintf(fp_lat, "%s", "\n");    
+                    fprintf(fp_lon, "%s", "\n");                
+                
+                }
+            }
+        }
+        
+        // close all files:
+        fclose(fp_values);
+        fclose(fp_lat);
+        fclose(fp_lon);
+        
+        if (show_output){
+            printf("ok\n");
+        }
+        
+        return EXIT_SUCCESS;
+    }
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n The number of rows and columns must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 2: fprintf(stderr, "ERROR: %s --> %d:\n The filepointer returns an error!\n>>> %s\n\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;
+            case 3: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
+    }
 }
 
 

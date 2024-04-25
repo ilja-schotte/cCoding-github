@@ -83,10 +83,10 @@ int create_maps_raster(struct usr_data_point ***raster, int rows, int cols){
     */
     
     int idx, jdx;
+    int excno;
     jmp_buf env;    
     
-    // ####################################### FUNCTION #############################################
-    void allocate_memory(struct usr_data_point ***raster, int rows, int cols){
+    if ((excno = setjmp(env)) == 0){
 
         struct usr_data_point **zgr;
 
@@ -112,16 +112,14 @@ int create_maps_raster(struct usr_data_point ***raster, int rows, int cols){
             // assign the address of the matrix to the raster address.
             *raster = zgr;
         }
+        return EXIT_SUCCESS;
     }
-    
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: allocate_memory(raster, rows, cols); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n Failure during the attempt to allocate memory\n--> %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;       
-    }    
-    
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n Failure during the attempt to allocate memory\n--> %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;       
+        }
+    } 
 }
 
 // ##################################################################################################
@@ -144,11 +142,13 @@ int set_config(struct usr_map *Map, int argc, char **argv){
     */
 
     int idx;
+    int excno;
     jmp_buf env;
     double cols;
     
-    // ####################################### FUNCTION #############################################
-    void complete_conf(struct usr_map *Map, int argc, char **argv){
+    
+    
+    if ((excno = setjmp(env)) == 0){
 
         // read the arguments:
         for (idx=0; idx<argc; idx++){
@@ -200,17 +200,16 @@ int set_config(struct usr_map *Map, int argc, char **argv){
         Map->latMetRes = calc_distance(0.0, 0.0, Map->latRes, 0);		// Distance to the origin of the coordinates (y)
         Map->lonMetRes = calc_distance(0.0, 0.0, 0.0, Map->lonRes);		// Distance to the origin of the coordinates (x)
         
+        return EXIT_SUCCESS;
     }
-    
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: complete_conf(Map, argc, argv); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n The number of rows must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 2: fprintf(stderr, "ERROR: %s --> %d:\n The number of maxLon and minLon must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 3: fprintf(stderr, "ERROR: %s --> %d:\n The number of maxLat and minLat must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 4: fprintf(stderr, "ERROR: %s --> %d:\n The calculated number of columns of the output raster is \"NAN\" or \"INF\"!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;        
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;       
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n The number of rows must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 2: fprintf(stderr, "ERROR: %s --> %d:\n The number of maxLon and minLon must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 3: fprintf(stderr, "ERROR: %s --> %d:\n The number of maxLat and minLat must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 4: fprintf(stderr, "ERROR: %s --> %d:\n The calculated number of columns of the output raster is \"NAN\" or \"INF\"!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;        
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;       
+        }
     }
 }
 
@@ -238,10 +237,10 @@ int fill_raster_with_default_data(struct usr_map *Map){
 
 
     int idx, jdx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################    
-    void set_default_data(struct usr_map *Map){
+    if ((excno = setjmp(env)) == 0){
 
         // check for rows greater then 0:
         if (Map->rows <= 0){
@@ -280,18 +279,17 @@ int fill_raster_with_default_data(struct usr_map *Map){
                 Map->raster[idx][jdx].value = NO_VALUE;
             }
         }
+        return EXIT_SUCCESS;
     }
-    
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: set_default_data(Map); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n The number of rows must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 2: fprintf(stderr, "ERROR: %s --> %d:\n The number of columns must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 3: fprintf(stderr, "ERROR: %s --> %d:\n The resolution of longitude must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 4: fprintf(stderr, "ERROR: %s --> %d:\n The resolution of latitude must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;                            
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;       
-    }    
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n The number of rows must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 2: fprintf(stderr, "ERROR: %s --> %d:\n The number of columns must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 3: fprintf(stderr, "ERROR: %s --> %d:\n The resolution of longitude must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 4: fprintf(stderr, "ERROR: %s --> %d:\n The resolution of latitude must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;                            
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;       
+        } 
+    }   
 }
 
 
@@ -320,6 +318,7 @@ int input_csv_data(struct usr_map *Map, char *input_datafile){
     FILE *fp;
     int rows = 0;
     int idx, jdx;
+    int excno;
     
     double sum = 0; 
     double *values_array;
@@ -328,9 +327,9 @@ int input_csv_data(struct usr_map *Map, char *input_datafile){
     char inputDecimal[20];
     char path[100];
     
-    // ####################################### FUNCTION #############################################
-    void read_input_data(struct usr_map *Map, char *input_datafile){
-        
+    
+    
+    if ((excno = setjmp(env)) == 0){
         
         // open input file:
         fp = fopen(strcat(strcpy(path,Map->config.input_dir), input_datafile), "r");
@@ -443,16 +442,17 @@ int input_csv_data(struct usr_map *Map, char *input_datafile){
             Map->input_data.average = (double)(sum / Map->input_data.length);
         
             fclose(fp);
+            return EXIT_SUCCESS;
         }
     }
     // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: read_input_data(Map, input_datafile); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n Failure when opening the csv-file:\n>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-        case 2: fprintf(stderr, "ERROR: %s --> %d:\n The counted number of datapoints is 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 3: fprintf(stderr, "ERROR: %s --> %d:\n Failure when allocating the memory for the input dataset:\n>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n Failure when opening the csv-file:\n>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+            case 2: fprintf(stderr, "ERROR: %s --> %d:\n The counted number of datapoints is 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 3: fprintf(stderr, "ERROR: %s --> %d:\n Failure when allocating the memory for the input dataset:\n>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
     }    
 }
 
@@ -479,10 +479,10 @@ double **create_fmatrix(int rows, int cols){
     */
 
     int idx, jdx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################
-    double **allocate(int rows, int cols){    
+    if ((excno = setjmp(env)) == 0){   
     
     
         double **zgr;
@@ -509,8 +509,7 @@ double **create_fmatrix(int rows, int cols){
     }
     // ##############################################################################################
 
-    switch(setjmp(env)){
-        case 0: return allocate(rows, cols);
+    switch(excno){
         case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return NULL;
         default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NULL;
     }     
@@ -539,10 +538,10 @@ double *create_fvector(int length){
 
     jmp_buf env;
     int idx;
+    int excno;
 
     
-    // ####################################### FUNCTION #############################################   
-    double *allocate(int length){
+    if ((excno = setjmp(env)) == 0){
     
         double *zgr;
         
@@ -554,12 +553,12 @@ double *create_fvector(int length){
             return zgr;
         }   
     }
-    // ##############################################################################################
-    switch(setjmp(env)){
-        case 0: return allocate(length);
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n>>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return NULL;
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NULL;
-    }   
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n>>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return NULL;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NULL;
+        }
+    }
 }
 
 
@@ -586,10 +585,10 @@ int *create_vector(int length){
 
     jmp_buf env;
     int idx;
+    int excno;
 
     
-    // ####################################### FUNCTION #############################################   
-    int *allocate(int length){
+    if ((excno = setjmp(env)) == 0){
     
         int *zgr;
         
@@ -599,14 +598,15 @@ int *create_vector(int length){
         }
         else{
             return zgr;
+        }
+        
+    }
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n>>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return NULL;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NULL;
         }   
     }
-    // ##############################################################################################
-    switch(setjmp(env)){
-        case 0: return allocate(length);
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n>>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return NULL;
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NULL;
-    }   
 }
 
 
@@ -632,10 +632,11 @@ int fill_raster_with_input_data(struct usr_map *Map){
 
     
     int idx, jdx, kdx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################
-    void fill_raster(struct usr_map *Map){    
+    
+    if ((excno = setjmp(env)) == 0){ 
     
         int min_row_idx, min_col_idx;
         double mlat, mlon, distance;
@@ -645,7 +646,7 @@ int fill_raster_with_input_data(struct usr_map *Map){
     
         // output?
         if (Map->show_output){
-            printf("Uebertrage Messpunkte auf Raster ... ");
+            printf("Assign points to raster ... ");
             fflush(stdout);
         }
         
@@ -700,14 +701,15 @@ int fill_raster_with_input_data(struct usr_map *Map){
         if (Map->show_output){
             printf(" ok.\n");
         }
+        
+        return EXIT_SUCCESS;
+    }  
+    else{  
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n The length of the input dataset is 0\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
     }    
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: fill_raster(Map); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n The length of the input dataset is 0\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-    }          
 
 }
 
@@ -733,14 +735,16 @@ int create_distance_matrix(struct usr_map *Map){
     */
     
     jmp_buf env;
+    int excno;
     int idx, jdx;
     
-    // ####################################### FUNCTION #############################################
-    void create_matrix(struct usr_map *Map){     
+    
+    
+    if ((excno = setjmp(env)) == 0){    
     
         // output ?
         if (Map->show_output){
-            printf("Berechne die Distanzmatrix ... ");
+            printf("Calculating distance matrix ... ");
             fflush(stdout);
         }
     
@@ -775,13 +779,14 @@ int create_distance_matrix(struct usr_map *Map){
                 printf("ok!\n");
             }       
         }
+        
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: create_matrix(Map); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
     }
 }
 
@@ -811,9 +816,9 @@ int create_variogram(struct usr_map *Map){
     
     jmp_buf env;
     int idx, jdx, kdx;
+    int excno;
     
-    // ####################################### FUNCTION #############################################    
-    void create(struct usr_map *Map){
+    if ((excno = setjmp(env)) == 0){
     
         int numValue;
         double semiVarianz;
@@ -828,7 +833,7 @@ int create_variogram(struct usr_map *Map){
         
         
         if (Map->show_output){
-            printf("Erstelle Variogramm ... ");
+            printf("Create variogram ... ");
             fflush(stdout);
         }
     
@@ -965,14 +970,16 @@ int create_variogram(struct usr_map *Map){
         if (Map->show_output){
             printf("ok.\n");
         }
+        
+        return EXIT_SUCCESS;
+        
     }
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: create(Map); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> There must be at least one variogram class.\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;        
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> There must be at least one variogram class.\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;        
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
     }
 }
 
@@ -1009,11 +1016,12 @@ int get_variogram_model(struct usr_map *Map){
     */
     
     int idx, jdx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################    
-    void get_model(struct usr_map *Map){    
     
+    
+    if ((excno = setjmp(env)) == 0){
     
         int cnt_neg_slope;
         int cnt_raising_slope;
@@ -1180,17 +1188,18 @@ int get_variogram_model(struct usr_map *Map){
         if (Map->show_output){
             printf("ok\n");
         }
+        
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: get_model(Map); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;                
-        case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> The solution for the polynomic regression returns NULL!\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 3: fprintf(stderr, "ERROR: %s --> %d:\n >>> The vector of the predicted variances contains \"NAN\" or \"INF\" values!\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 4: fprintf(stderr, "ERROR: %s --> %d:\n >>> The value of the b0 weight is \"NAN\" or \"INF\"!\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 5: fprintf(stderr, "ERROR: %s --> %d:\n >>> The calculated value of the RSME is \"NAN\" or \"INF\"!\n", __FILE__, __LINE__); return EXIT_FAILURE;        
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;                
+            case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> The solution for the polynomic regression returns NULL!\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 3: fprintf(stderr, "ERROR: %s --> %d:\n >>> The vector of the predicted variances contains \"NAN\" or \"INF\" values!\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 4: fprintf(stderr, "ERROR: %s --> %d:\n >>> The value of the b0 weight is \"NAN\" or \"INF\"!\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 5: fprintf(stderr, "ERROR: %s --> %d:\n >>> The calculated value of the RSME is \"NAN\" or \"INF\"!\n", __FILE__, __LINE__); return EXIT_FAILURE;        
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
     }
 }
 
@@ -1221,12 +1230,11 @@ int find_model_adjust_index(struct usr_map *Map, double *variogram_variances, in
     */
 
     int idx, jdx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################    
-    void get_index(struct usr_map *Map){
     
-    
+    if ((excno = setjmp(env)) == 0){
     
         int imax=0;
         int *density_variances;
@@ -1274,15 +1282,16 @@ int find_model_adjust_index(struct usr_map *Map, double *variogram_variances, in
         }
         
         free(density_variances);
+        
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: get_index(Map); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> There must be at least one variogram class.\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;        
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-    }   
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> There must be at least one variogram class.\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;        
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
+    }  
 }
 
 
@@ -1306,10 +1315,11 @@ int create_covariance_matrix(struct usr_map *Map){
     */
 
     int idx, jdx;
+    int excno;
     jmp_buf env;
 
-    // ####################################### FUNCTION #############################################    
-    void create_matrix(struct usr_map *Map){   
+
+    if ((excno = setjmp(env)) == 0){  
 
         double tmp;	 		// temporary value for checking purposes
 
@@ -1371,14 +1381,15 @@ int create_covariance_matrix(struct usr_map *Map){
         if (Map->show_output){
             printf("ok!\n");
         }
+        
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: create_matrix(Map); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-        case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> There must be at least one variogram class.\n", __FILE__, __LINE__); return EXIT_FAILURE;                
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+            case 2: fprintf(stderr, "ERROR: %s --> %d:\n >>> There must be at least one variogram class.\n", __FILE__, __LINE__); return EXIT_FAILURE;                
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
     }
 }
 
@@ -1404,11 +1415,10 @@ int create_inverted_covariance_matrix(struct usr_map *Map){
     */
 
     int idx, jdx, kdx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################    
-    void create_matrix(struct usr_map *Map){    
-    
+    if ((excno = setjmp(env)) == 0){
     
         double temp;
         double **matrix_temp;		// temporary matrix for calculation purposes.
@@ -1482,13 +1492,15 @@ int create_inverted_covariance_matrix(struct usr_map *Map){
         if (Map->show_output){
             printf("ok\n");
         }
+        
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-    switch(setjmp(env)){
-        case 0: create_matrix(Map); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-        case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The covarinace matrix contains \"NAN\" and \"INF\" values\n", __FILE__, __LINE__); return EXIT_FAILURE;                
-        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+            case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The covarinace matrix contains \"NAN\" and \"INF\" values\n", __FILE__, __LINE__); return EXIT_FAILURE;                
+            default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
     }
 }
 
@@ -1515,12 +1527,12 @@ int interpolate_raster(struct usr_map *Map){
     
 
     int idx, jdx, kdx;
+    int excno;
     jmp_buf env;
     int err = EXIT_FAILURE;
     
-    // ####################################### FUNCTION #############################################    
-    void interpolate(struct usr_map *Map){    
     
+    if ((excno = setjmp(env)) == 0){
     
         int value_cnt=1;
         double *cov_vector, *weights_vector;
@@ -1539,7 +1551,7 @@ int interpolate_raster(struct usr_map *Map){
         
         
         if (Map->show_output){
-            printf("Interpoliere ...         ");
+            printf("interpolating ...         ");
             fflush(stdout);
         }
         
@@ -1641,18 +1653,20 @@ int interpolate_raster(struct usr_map *Map){
         
         free(cov_vector);
         free(weights_vector);
+        
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-    switch(setjmp(env)){
-        case 0: interpolate(Map); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-        case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The calculated distance is \"NAN\" or \"INF\"\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 3: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The calculated covariance is \"NAN\" or \"INF\"\n", __FILE__, __LINE__); return EXIT_FAILURE; 
-        case 4: fprintf(stderr, "\nERROR: %s --> %d:\n >>> Calculation of weights returned an error!\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 5: fprintf(stderr, "\nERROR: %s --> %d:\n >>> Correction of negative weights returned an error!\n", __FILE__, __LINE__); return EXIT_FAILURE;                              
-        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-    }  
-};
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+            case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The calculated distance is \"NAN\" or \"INF\"\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 3: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The calculated covariance is \"NAN\" or \"INF\"\n", __FILE__, __LINE__); return EXIT_FAILURE; 
+            case 4: fprintf(stderr, "\nERROR: %s --> %d:\n >>> Calculation of weights returned an error!\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 5: fprintf(stderr, "\nERROR: %s --> %d:\n >>> Correction of negative weights returned an error!\n", __FILE__, __LINE__); return EXIT_FAILURE;                              
+            default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
+    }
+};        
 
 
 // ##################################################################################################
@@ -1679,11 +1693,11 @@ int correct_negative_weights(double *weights_vector, double *cov_vector, int len
     */
 
     int idx;
+    int excno;
     jmp_buf env;
 
 
-    // ####################################### FUNCTION #############################################    
-    void correct(double *weights_vector, double *cov_vector, int length){ 
+    if ((excno = setjmp(env)) == 0){
 
         int cnt=0;
         double sum_weights=0;					// sum of all weights
@@ -1711,7 +1725,7 @@ int correct_negative_weights(double *weights_vector, double *cov_vector, int len
         // end this function if there are no negative weights.   
         if (cnt == 0){
     
-            return;
+            return EXIT_SUCCESS;
         }
         else{
             // Calculate the average of the sum of neg. weights and covariances
@@ -1764,15 +1778,15 @@ int correct_negative_weights(double *weights_vector, double *cov_vector, int len
                 }
             }
         }
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-    switch(setjmp(env)){
-        case 0: correct(weights_vector, cov_vector, length); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The averages of the negative weights or covariances are \"NAN\" or \"INF\"!\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;               
-        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The averages of the negative weights or covariances are \"NAN\" or \"INF\"!\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;               
+            default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
     }    
-    
 }
 
 
@@ -1798,9 +1812,9 @@ double calc_distance(double latA, double lonA, double latB, double lonB){
     */ 
     
     jmp_buf env;
+    int excno;
     
-    // ####################################### FUNCTION #############################################   
-    double calc(double latA, double lonA, double latB, double lonB){
+    if ((excno = setjmp(env)) == 0){
         
         if ((isnan(latA)) || (isnan(lonA)) || (isnan(latB)) || (isnan(lonB)) ||
             (isinf(latA)) || (isinf(lonA)) || (isinf(latB)) || (isinf(lonB))){
@@ -1819,14 +1833,13 @@ double calc_distance(double latA, double lonA, double latB, double lonB){
 
         return RADIUS_EARTH * acos( (sin(latA_rad) * sin(latB_rad) ) + ( cos(latA_rad) * cos(latB_rad) * ( cos(lonB_rad - lonA_rad) ) ) );
     }
-    // ##############################################################################################
-    switch(setjmp(env)){
-        case 0: return calc(latA, lonA, latB, lonB);
-        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> One of the coordinates is equal to \"NAN\" or \"INF\"\n", __FILE__, __LINE__); return NAN;                       
-        case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return NAN;               
-        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
-    }     
-    
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> One of the coordinates is equal to \"NAN\" or \"INF\"\n", __FILE__, __LINE__); return NAN;                       
+            case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return NAN;               
+            default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+        }  
+    }   
 }
 
 
@@ -1853,9 +1866,9 @@ double calc_covariance(double distance, double sill, double nugget, double range
     */
     
     jmp_buf env;
+    int excno;
     
-    // ####################################### FUNCTION #############################################    
-    double calc(double distance, double sill, double nugget, double range){     
+    if ((excno = setjmp(env)) == 0){   
     
         double z, n;
     
@@ -1863,17 +1876,16 @@ double calc_covariance(double distance, double sill, double nugget, double range
         // nugget + sill *(1-exp(-|distance|/(range/3)))
     
         n = range / 3.0;		// 
-        z = -1 * abs(distance);		// distance must be negative
+        z = -1 * fabs(distance);	// distance must be negative
     
         return nugget + sill * (1 - exp(z/n));
     }
-    // ##############################################################################################
-    switch(setjmp(env)){
-        case 0: return calc(distance, sill, nugget, range);
-        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return NAN;                
-        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
-    }    
-
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__, strerror(errno)); return NAN;                
+            default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+        }
+    }
 }
 
 
@@ -1903,10 +1915,10 @@ int multiplyMatrixVector(double **matrix, double *vector_in, double *vector_out,
     */
 
     int idx, jdx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################    
-    double multiply(double **matrix, double *vector_in, double *vector_out, int rows, int cols){
+    if ((excno = setjmp(env)) == 0){
 
         double sum=0;
 
@@ -1939,16 +1951,17 @@ int multiplyMatrixVector(double **matrix, double *vector_in, double *vector_out,
                 
                 vector_out[idx] += (matrix[idx][jdx] * vector_in[jdx]);
             }
-        }        
+        }
+        return EXIT_SUCCESS;       
     }
-    // ##############################################################################################
-    switch(setjmp(env)){
-        case 0: multiply(matrix, vector_in, vector_out, rows, cols); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The number of columns of the matrix must be equal to number of rows of the vector\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> Input vector contains \"NAN\" or \"INF\" values!\n", __FILE__, __LINE__); return EXIT_FAILURE; 
-        case 3: fprintf(stderr, "\nERROR: %s --> %d:\n >>> Input matrix contains \"NAN\" or \"INF\" values!\n", __FILE__, __LINE__); return EXIT_FAILURE;                                
-        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-    }         
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The number of columns of the matrix must be equal to number of rows of the vector\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> Input vector contains \"NAN\" or \"INF\" values!\n", __FILE__, __LINE__); return EXIT_FAILURE; 
+            case 3: fprintf(stderr, "\nERROR: %s --> %d:\n >>> Input matrix contains \"NAN\" or \"INF\" values!\n", __FILE__, __LINE__); return EXIT_FAILURE;                                
+            default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
+    }       
 }
 
 
@@ -1969,11 +1982,10 @@ double calc_RSME(double *values1, double *values2, int length){
     */
 
     int idx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################    
-    double rsme(double *values1, double *values2, int length){    
-    
+    if ((excno = setjmp(env)) == 0){
     
         double qsum=0;		// sum of the powered differences.
     
@@ -1994,13 +2006,12 @@ double calc_RSME(double *values1, double *values2, int length){
         }
         return sqrt(qsum/length);
     }
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: return rsme(values1, values2, length);
-        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); return NAN;
-        case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The datasets contains NAN or INF values!\n", __FILE__, __LINE__); return NAN;        
-        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); return NAN;
+            case 2: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The datasets contains NAN or INF values!\n", __FILE__, __LINE__); return NAN;        
+            default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+        }
     }
 }
 
@@ -2028,10 +2039,10 @@ double get_fvector_max(double *values, int length){
 
     
     int idx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################    
-    double maximum(double *values, int length){ 
+    if ((excno = setjmp(env)) == 0){
         
         double maxValue = values[0];
     
@@ -2045,12 +2056,11 @@ double get_fvector_max(double *values, int length){
         }
         return maxValue;
     }
-    // ##############################################################################################
-    
-    switch(setjmp(env)){
-        case 0: return maximum(values, length);
-        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); return NAN;
-        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); return NAN;
+            default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+        }
     }
 }
 
@@ -2077,10 +2087,10 @@ int get_dvector_max(int *values, int length){
     */
     
     int idx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################    
-    double maximum(int *values, int length){     
+    if ((excno = setjmp(env)) == 0){     
     
         if (length <= 0){
             longjmp(env, 1);
@@ -2097,14 +2107,12 @@ int get_dvector_max(int *values, int length){
         }
         return maxValue;
     }
-    // ##############################################################################################
-    
-    switch(setjmp(env)){
-        case 0: return maximum(values, length);
-        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); exit(errno);
-        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); exit(errno);
-    }  
-
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); exit(errno);
+            default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); exit(errno);
+        }  
+    }
 }
 
 
@@ -2131,10 +2139,10 @@ double get_fvector_min(double *values, int length){
 
     
     int idx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################    
-    double minimum(double *values, int length){ 
+    if ((excno = setjmp(env)) == 0){
         
         double minValue = values[0];
     
@@ -2148,12 +2156,11 @@ double get_fvector_min(double *values, int length){
         }
         return minValue;
     }
-    // ##############################################################################################
-    
-    switch(setjmp(env)){
-        case 0: return minimum(values, length);
-        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); return NAN;
-        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); return NAN;
+            default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return NAN;
+        }
     }
 }
 
@@ -2180,10 +2187,10 @@ int get_dvector_min(int *values, int length){
     */
     
     int idx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################    
-    double minimum(int *values, int length){     
+    if ((excno = setjmp(env)) == 0){     
     
         if (length <= 0){
             longjmp(env, 1);
@@ -2200,12 +2207,11 @@ int get_dvector_min(int *values, int length){
         }
         return minValue;
     }
-    // ##############################################################################################
-    
-    switch(setjmp(env)){
-        case 0: return minimum(values, length);
-        case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); exit(errno);
-        default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); exit(errno);
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "\nERROR: %s --> %d:\n >>> The length must be greater then 0!\n", __FILE__, __LINE__); exit(errno);
+            default: fprintf(stderr, "\nERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); exit(errno);
+        }
     }     
 }
 
@@ -2236,10 +2242,10 @@ int outputRasterCSV(struct usr_data_point **raster, char *output_dir, char *file
 
 
     int idx, jdx, kdx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################    
-    double output(struct usr_data_point **raster, char *output_dir, char *filename, int rows, int cols, bool show_output){
+    if ((excno = setjmp(env)) == 0){
     
         char valueText[20], latText[20], lonText[20];
         char path[100];
@@ -2356,16 +2362,17 @@ int outputRasterCSV(struct usr_data_point **raster, char *output_dir, char *file
         if (show_output){
             printf("ok\n");
         }
+        
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: output(raster, output_dir, filename, rows, cols, output); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n The number of rows and columns must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        case 2: fprintf(stderr, "ERROR: %s --> %d:\n The filepointer returns an error!\n>>> %s\n\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;
-        case 3: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-    }  
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n The number of rows and columns must be greater then 0!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            case 2: fprintf(stderr, "ERROR: %s --> %d:\n The filepointer returns an error!\n>>> %s\n\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;
+            case 3: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
+    }
 }
 
 
@@ -2390,10 +2397,10 @@ int get_output_information(struct usr_map *Map){
     */
     
     int idx, jdx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################
-    void calc(struct usr_map *Map){
+    if ((excno = setjmp(env)) == 0){
     
         double sum=0;
     
@@ -2424,13 +2431,14 @@ int get_output_information(struct usr_map *Map){
         }
     
         Map->output_data.average = sum / (double)(Map->rows * Map->cols);
+        
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: calc(Map); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
     }    
 }
 
@@ -2461,9 +2469,9 @@ int check_matrix(double **matrix, int rows, int cols, bool show_output){
     
     jmp_buf env;
     int idx, jdx;
+    int excno;
     
-    // ####################################### FUNCTION #############################################
-    void check(double **matrix, int rows, int cols, bool show_output){     
+    if ((excno = setjmp(env)) == 0){    
     
     
         unsigned int cnt_nan = 0;
@@ -2549,14 +2557,13 @@ int check_matrix(double **matrix, int rows, int cols, bool show_output){
         if ((cnt_nan > 0) || (cnt_inf > 0)){
             longjmp(env, 1);        
         }
-        
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: check(matrix, rows, cols, show_output); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n The matrix contains \"NAN\" or \"INF\" values!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n The matrix contains \"NAN\" or \"INF\" values!\n\n", __FILE__, __LINE__); return EXIT_FAILURE;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
     }
 }
 
@@ -2581,12 +2588,12 @@ int show_variogram_data(struct usr_map *Map){
     */
     
     jmp_buf env;
+    int excno;
     int idx;    
     
     
     
-    // ####################################### FUNCTION #############################################
-    void show(struct usr_map *Map){
+    if ((excno = setjmp(env)) == 0){
     
         if (Map->show_output){
 
@@ -2627,13 +2634,13 @@ int show_variogram_data(struct usr_map *Map){
             printf("########################################################################################\n");
             printf("########################################################################################\n\n");
         }
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: show(Map); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
     }          
 }
 
@@ -2659,46 +2666,47 @@ int show_map_info(struct usr_map *Map){
     */
 
     jmp_buf env;
+    int excno;
     
-    // ####################################### FUNCTION #############################################    
-    void show(struct usr_map *Map){
+    if ((excno = setjmp(env)) == 0){
     
         if (Map->show_output){
+            printf("\n\n");
             printf("############### INFORMATION ##############\n\n");
-            printf("   Geogr. Breite: %.3f (Minimum)\n",Map->minLat);
-            printf("   Geogr. Breite: %.3f (Maximum)\n",Map->maxLat);   
-            printf("   Geogr. Laenge: %.3f (Minimum)\n",Map->minLon);
-            printf("   Geogr. Laenge: %.3f (Maximum)\n\n",Map->maxLon);    
+            printf("   Geogr. latitude: %.3f (minimum)\n",Map->minLat);
+            printf("   Geogr. latitude: %.3f (maximum)\n",Map->maxLat);   
+            printf("   Geogr. longitude: %.3f (minimum)\n",Map->minLon);
+            printf("   Geogr. longitude: %.3f (maximum)\n\n",Map->maxLon);    
             printf("\n");    
-            printf("   Anzahl der Felder: %d\n", (Map->rows)*(Map->cols));
-            printf("   Zeilen: %d\n", Map->rows);
-            printf("   Spalten: %d\n", Map->cols); 
+            printf("   Number of raster points: %d\n", (Map->rows)*(Map->cols));
+            printf("   Rows: %d\n", Map->rows);
+            printf("   Columns: %d\n", Map->cols); 
             printf("\n");    
-            printf("   Aufloesung (Breite): %.3f\n", Map->latRes);
-            printf("   Aufloesung (Laenge): %.3f\n", Map->lonRes); 
-            printf("   Aufloesung (Breite, km): %.3f\n", Map->latMetRes);
-            printf("   Aufloesung (Laenge, km): %.3f\n", Map->lonMetRes);  
+            printf("   Resolution (latitude): %.3f\n", Map->latRes);
+            printf("   Resolution (longitude): %.3f\n", Map->lonRes); 
+            printf("   Resolution (latitude, km): %.3f\n", Map->latMetRes);
+            printf("   Resolution (longitude, km): %.3f\n", Map->lonMetRes);  
             printf("\n");    
-            printf("   --------------Inputdaten---------------\n\n");
-            printf("   Anzahl der Stationswerte: %d\n", Map->input_data.length);
-            printf("   Maximumwert: %.3f\n", Map->input_data.maximum);
-            printf("   Minimumwert: %.3f\n", Map->input_data.minimum);
-            printf("   Mittelwert: %.3f\n", Map->input_data.average);
+            printf("   --------------input data---------------\n\n");
+            printf("   Number of measured values: %d\n", Map->input_data.length);
+            printf("   Maximum: %.3f\n", Map->input_data.maximum);
+            printf("   Minimum: %.3f\n", Map->input_data.minimum);
+            printf("   Average: %.3f\n", Map->input_data.average);
             printf("\n");
-            printf("   --------------Outputdaten--------------\n\n");
-            printf("   Maximumwert: %.3f\n", Map->output_data.maximum);
-            printf("   Minimumwert: %.3f\n", Map->output_data.minimum);
-            printf("   Mittelwert: %.3f\n", Map->output_data.average);
+            printf("   --------------output data--------------\n\n");
+            printf("   Maximum: %.3f\n", Map->output_data.maximum);
+            printf("   Minimum: %.3f\n", Map->output_data.minimum);
+            printf("   Average: %.3f\n", Map->output_data.average);
             printf("\n");    
             printf("##########################################\n\n");          
         }
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: show(Map); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n %s\n\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
     }    
 }
 
@@ -2729,12 +2737,12 @@ int show_matrix(char *name, double **matrix, int rows, int cols, bool show_outpu
     
    
     int idx, jdx;
+    int excno;
     jmp_buf env;
     
     
     
-    // ####################################### FUNCTION #############################################    
-    void show(double **matrix, int rows, int cols){ 
+    if ((excno = setjmp(env)) == 0){
     
         if ((rows <= 0) || (cols <= 0)){
             longjmp(env, 1);
@@ -2755,14 +2763,15 @@ int show_matrix(char *name, double **matrix, int rows, int cols, bool show_outpu
             }
             printf("\n");
         }
+        
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: show(matrix, rows, cols); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> The given number of rows and columns are lower/equal to 0!\n", __FILE__, __LINE__); return EXIT_FAILURE;                
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
-    }    
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> The given number of rows and columns are lower/equal to 0!\n", __FILE__, __LINE__); return EXIT_FAILURE;                
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }    
+    }
 }
 
 
@@ -2787,31 +2796,32 @@ int show_input_data(struct usr_map *Map){
     */   
 
     int idx;
+    int excno;
     jmp_buf env;
     
-    // ####################################### FUNCTION #############################################    
-    void show(struct usr_map *Map){    
+    if ((excno = setjmp(env)) == 0){   
     
-        printf("%3s %-30s%10s%10s%10s%6s%6s\n","id", "name", "lat", "lon", "value", "row", "col");
+        if (Map->show_output){
+            printf("%3s %-30s%10s%10s%10s%6s%6s\n","id", "name", "lat", "lon", "value", "row", "col");
         
-        for (idx=0; idx<Map->input_data.length; idx++){
+            for (idx=0; idx<Map->input_data.length; idx++){
     
-            printf("%3d %-30s%10.3f%10.3f%10.2f%6d%6d\n",idx,
-                                                         Map->input_data.data[idx].name,
-                                                         Map->input_data.data[idx].lat,
-                                                         Map->input_data.data[idx].lon,
-                                                         Map->input_data.data[idx].value,
-                                                         Map->input_data.data[idx].row_idx,
-                                                         Map->input_data.data[idx].col_idx);
-            
+                printf("%3d %-30s%10.3f%10.3f%10.2f%6d%6d\n",idx,
+                                                             Map->input_data.data[idx].name,
+                                                             Map->input_data.data[idx].lat,
+                                                             Map->input_data.data[idx].lon,
+                                                             Map->input_data.data[idx].value,
+                                                             Map->input_data.data[idx].row_idx,
+                                                             Map->input_data.data[idx].col_idx);
+            }
         }
+        return EXIT_SUCCESS;
     }
-    // ##############################################################################################
-
-    switch(setjmp(env)){
-        case 0: show(Map); return EXIT_SUCCESS;
-        case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;                
-        default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+    else{
+        switch(excno){
+            case 1: fprintf(stderr, "ERROR: %s --> %d:\n >>> %s\n", __FILE__, __LINE__,strerror(errno)); return EXIT_FAILURE;                
+            default: fprintf(stderr, "ERROR: %s --> %d:\n Woops! Somethings nasty has happend!\n%s\n", __FILE__, __LINE__, strerror(errno)); return EXIT_FAILURE;
+        }
     }       
 }
 

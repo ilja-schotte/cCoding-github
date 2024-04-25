@@ -41,24 +41,28 @@ int main(int argc, char **argv){
     // ############ declaration and initializing of object "Map" ############################
     // use this section for configuration purposes:
     
-    struct usr_map Map = {.minLat = 47.000,						// minLat ("minimum latitude") : min. decimal degree (latitude) 
-                          .maxLat = 55.000,						// maxLat ("maximum latitude") : max. decimal degree (latitude)
-                          .minLon = 5.000,						// minLon ("minimum longitude") : min. decimal degree (longitude) 
-                          .maxLon = 16.000,						// maxLon ("maximum longitude") : max. decimal degree (longitude)
-                          .latRes = 0,							// 0,04545 => resolution of 5 km / 0,00909 => resolution of approx 1km
-                          .lonRes = 0,							// 0,04545 => resolution of 5 km / 0,00909 => resolution of approx 1km
-                          .latMetRes = 0,						// resolution between two points (geogr. latitude)
-                          .lonMetRes = 0,						// resolution between two points (geogr. longitude)
-                          .show_output = false,						// show output during calculations
-                          .rows = 900,							// 900 => resolution of 1 km in horizontal direction
-                          .cols = 0,							// will be subsequently calculated 						
-                          .config = {.output_dir = {"./output/"},			// output directory 
-                                     .output_datafile = {"interpolRaster.csv"}, 	// outputfile without correction
-                                     .input_dir = {"./input/"},				// input directory 			
-                                     .input_datafile = {"tagessummen_177.csv"}},	// dataset of the sums of daily precipiation
-                         .input_data.data = NULL,
-                         .raster = NULL,
-                         };
+    struct usr_map Map = {
+        .minLat = 47.000,					// minLat ("minimum latitude") : min. decimal degree (latitude) 
+        .maxLat = 55.000,					// maxLat ("maximum latitude") : max. decimal degree (latitude)
+        .minLon = 5.000,					// minLon ("minimum longitude") : min. decimal degree (longitude) 
+        .maxLon = 16.000,					// maxLon ("maximum longitude") : max. decimal degree (longitude)
+        .latRes = 0,						// 0,04545 => resolution of 5 km / 0,00909 => resolution of approx 1km
+        .lonRes = 0,						// 0,04545 => resolution of 5 km / 0,00909 => resolution of approx 1km
+        .latMetRes = 0,						// resolution between two points (geogr. latitude)
+        .lonMetRes = 0,						// resolution between two points (geogr. longitude)
+        .show_output = false,					// show output during calculations
+        .rows = 900,						// 900 => resolution of 1 km in horizontal direction
+        .cols = 0,						// will be subsequently calculated 						
+        .config = {
+            .output_dir = {"./output/"},			// output directory 
+            .output_datafile = {"interpolRaster.csv"}, 		// outputfile without correction
+            .input_dir = {"./input/"},				// input directory 			
+            .input_datafile = {"tagessummen_452.csv"},		// dataset of the sums of daily precipiation
+            ._exp = 2,						// exponent of the distance
+        },
+        .input_data.data = NULL,
+        .raster = NULL,
+        };
     
     
     // ####################################################################################    
@@ -124,7 +128,7 @@ int main(int argc, char **argv){
         exit(err);
     }) : NULL;
                   
-    /*// Bestimme Metadaten des Ausgabeprodukts:
+    // Bestimme Metadaten des Ausgabeprodukts:
     err = get_output_information(&Map);
     (err == EXIT_FAILURE) ? ({
         free_raster(&Map);
@@ -141,14 +145,10 @@ int main(int argc, char **argv){
     }) : NULL;
     
        
-    // the output depends on if correction of negative weights was selected or not:
-    if (Map.weights_correction){        
-        outputRasterCSV(Map.raster, Map.config.output_dir, Map.config.output_datafile_cor, Map.rows, Map.cols, Map.show_output);
-    }
-    else{
-        outputRasterCSV(Map.raster, Map.config.output_dir, Map.config.output_datafile, Map.rows, Map.cols, Map.show_output);
-    }
-    */
+    // tnow output the value, latitude and longitude raster to csv files:
+    outputRasterCSV(Map.raster, Map.config.output_dir, Map.config.output_datafile, Map.rows, Map.cols, Map.show_output);
+    
+    
     // clean up:
     free_raster(&Map);
     free_vector(&Map);             

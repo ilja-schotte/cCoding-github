@@ -69,7 +69,7 @@ int main(int argc, char **argv){
                                      .output_datafile = {"interpolRaster.csv"}, 	// outputfile without correction
                                      .output_datafile_cor = {"interpolRaster_c.csv"},	// ouputtfile with correction
                                      .input_dir = {"./input/"},				// input directory 			
-                                     .input_datafile = {"tagessummen_177.csv"}},	// dataset of the sums of daily precipiation
+                                     .input_datafile = {"tagessummen_452.csv"}},	// dataset of the sums of daily precipiation
                          .input_data.data = NULL,
                          .variogram.classes = NULL,
                          .variogram.reg_function.solution = NULL,

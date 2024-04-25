@@ -30,6 +30,7 @@ struct usr_config{
     char input_dir[100];
     char input_datafile[100];
     char output_datafile[100];
+    unsigned char _exp;
 
 };
 
